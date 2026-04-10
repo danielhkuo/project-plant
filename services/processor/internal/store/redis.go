@@ -39,6 +39,7 @@ func (s *RedisStore) SetLatest(ctx context.Context, deviceID string, event telem
 	pipe := s.client.Pipeline()
 	pipe.Set(ctx, key, data, s.ttl)
 	pipe.SAdd(ctx, "devices:active", deviceID)
+	pipe.Publish(ctx, "readings:"+deviceID, data)
 	_, err = pipe.Exec(ctx)
 	return err
 }

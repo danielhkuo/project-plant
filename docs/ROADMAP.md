@@ -21,7 +21,7 @@ Each step follows test-driven development: **write tests first**, then implement
 - [x] **Step 9:** Storage Layer — Postgres + Redis (Go + testcontainers)
 
 **Phase 4 — Dashboard**
-- [ ] **Step 10:** Dashboard API — REST + WebSocket (Go)
+- [x] **Step 10:** Dashboard API — REST + WebSocket (Go)
 - [ ] **Step 11:** Frontend Dashboard (Next.js)
 
 **Phase 5 — Integration & Validation**
@@ -493,7 +493,7 @@ Redis (`services/processor/internal/store/redis_test.go`):
 
 ---
 
-## Step 10: Dashboard API — REST + WebSocket (Go)
+## Step 10: Dashboard API — REST + WebSocket (Go) ✅
 
 **Goal:** Build the read-side API that the frontend will consume. REST for queries, WebSocket for real-time updates. This is the Verkada Command equivalent — how operators see their fleet.
 
@@ -558,6 +558,15 @@ Redis (`services/processor/internal/store/redis_test.go`):
 - All WebSocket tests pass
 - No goroutine leaks on client disconnect
 - API responses match the frontend's expected data shapes
+
+**Result:** 22 unit tests pass (12 REST handlers + 4 middleware + 6 WebSocket). `make test-all` green.
+
+**Implemented:**
+- `services/dashboard/internal/api/` — REST handlers with interface-based DI, middleware chain, `DeviceWithStatus` type with computed status mapping to Nothing design system tokens
+- `services/dashboard/internal/ws/` — WebSocket hub (fan-out), per-connection client with device filtering, Redis Pub/Sub subscriber bridge
+- `services/dashboard/internal/store/` — Redis `DeviceReader` + Postgres `HistoryReader`/`AlertStore`/`StatsReader` adapters
+- `services/dashboard/cmd/dashboard/main.go` — Entrypoint with graceful shutdown
+- **Prerequisite:** Added `readings:{deviceID}` PubSub publish to processor's `SetLatest` (1-line change)
 
 ---
 
