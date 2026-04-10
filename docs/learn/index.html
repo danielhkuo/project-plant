@@ -1,0 +1,2461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Plant — Technology Study Guide</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232733;
+    --border: #2e3345;
+    --text: #e0e0e8;
+    --text-dim: #8b8fa3;
+    --accent: #4ade80;
+    --accent2: #22d3ee;
+    --accent3: #a78bfa;
+    --accent4: #fb923c;
+    --accent5: #f472b6;
+    --danger: #f87171;
+    --code-bg: #151820;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar ─────────────────────── */
+  nav {
+    width: 280px;
+    min-width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 100;
+  }
+  nav h1 {
+    font-size: 18px;
+    padding: 0 20px 16px;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+  }
+  nav .nav-group {
+    padding: 8px 0;
+  }
+  nav .nav-group-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    padding: 8px 20px 4px;
+  }
+  nav a {
+    display: block;
+    padding: 6px 20px 6px 28px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+  }
+  nav a:hover, nav a.active {
+    color: var(--text);
+    background: var(--surface2);
+    border-left-color: var(--accent);
+  }
+  nav .progress-bar {
+    margin: 16px 20px;
+    padding: 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  nav .progress-bar .bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  nav .progress-bar .bar .fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+  nav .progress-bar span {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* ── Main Content ────────────────── */
+  main {
+    margin-left: 280px;
+    flex: 1;
+    max-width: 900px;
+    padding: 40px 48px 80px;
+  }
+  section {
+    display: none;
+    animation: fadeIn 0.3s;
+  }
+  section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  h2 {
+    font-size: 28px;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  h2 .emoji { margin-right: 8px; }
+  h3 {
+    font-size: 20px;
+    margin: 32px 0 12px;
+    color: var(--accent2);
+  }
+  h4 {
+    font-size: 16px;
+    margin: 20px 0 8px;
+    color: var(--accent3);
+  }
+  p { margin-bottom: 16px; color: var(--text); }
+  .subtitle {
+    font-size: 15px;
+    color: var(--text-dim);
+    margin-bottom: 28px;
+  }
+
+  /* ── Tags ─────────────────────────── */
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 12px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .tag-go { background: #1e3a5f; color: #60a5fa; }
+  .tag-python { background: #3b2f1a; color: #fbbf24; }
+  .tag-infra { background: #1a3329; color: #4ade80; }
+  .tag-pattern { background: #2d1f3d; color: #a78bfa; }
+  .tag-testing { background: #3d1f2a; color: #f472b6; }
+  .tag-frontend { background: #1a2f3d; color: #22d3ee; }
+
+  /* ── Code Blocks ──────────────────── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin: 12px 0 20px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 13px;
+  }
+  p code, li code, td code {
+    background: var(--surface2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--accent2);
+  }
+
+  /* ── Diagrams ─────────────────────── */
+  .diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre;
+    overflow-x: auto;
+    color: var(--text-dim);
+  }
+  .diagram .hl { color: var(--accent); font-weight: bold; }
+  .diagram .hl2 { color: var(--accent2); font-weight: bold; }
+  .diagram .hl3 { color: var(--accent3); font-weight: bold; }
+  .diagram .hl4 { color: var(--accent4); font-weight: bold; }
+
+  /* ── Concept Cards ────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 16px 0;
+  }
+  .card-title {
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+    font-size: 15px;
+  }
+  .card p { margin-bottom: 8px; }
+
+  /* ── Comparison Cards ─────────────── */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .compare .bad {
+    border-left: 3px solid var(--danger);
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 16px 20px;
+  }
+  .compare .good {
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 16px 20px;
+  }
+  .compare .label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .compare .bad .label { color: var(--danger); }
+  .compare .good .label { color: var(--accent); }
+
+  /* ── Tables ───────────────────────── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: 14px;
+  }
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--surface2);
+    color: var(--accent2);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  tr:last-child td { border-bottom: none; }
+
+  /* ── Interactive Flow Animation ──── */
+  .flow-demo {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin: 16px 0 24px;
+  }
+  .flow-demo .flow-title {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .flow-nodes {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .flow-node {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 100px;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .flow-node.active {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.2);
+  }
+  .flow-arrow {
+    color: var(--text-dim);
+    font-size: 18px;
+    font-weight: bold;
+  }
+  .node-device { background: #1e3a2a; color: var(--accent); border: 1px solid #2d5a3f; }
+  .node-api { background: #1e2a3a; color: var(--accent2); border: 1px solid #2d3a5a; }
+  .node-kafka { background: #2a2a1e; color: var(--accent4); border: 1px solid #4a3a2d; }
+  .node-processor { background: #2a1e3a; color: var(--accent3); border: 1px solid #3a2d5a; }
+  .node-pg { background: #1e2a3a; color: #60a5fa; border: 1px solid #2d3a5a; }
+  .node-redis { background: #3a1e1e; color: var(--danger); border: 1px solid #5a2d2d; }
+  .node-dash { background: #1a3329; color: var(--accent); border: 1px solid #2d5a3f; }
+
+  /* ── Data Packet Animation ──────── */
+  .packet {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    position: absolute;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  /* ── Quiz ─────────────────────────── */
+  .quiz {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin: 24px 0;
+  }
+  .quiz-question {
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text);
+    font-size: 15px;
+  }
+  .quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .quiz-option {
+    padding: 10px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+  }
+  .quiz-option:hover {
+    border-color: var(--accent2);
+    background: #1a2a35;
+  }
+  .quiz-option.correct {
+    border-color: var(--accent);
+    background: #1a3329;
+    color: var(--accent);
+  }
+  .quiz-option.wrong {
+    border-color: var(--danger);
+    background: #3a1a1a;
+    color: var(--danger);
+  }
+  .quiz-option.disabled {
+    pointer-events: none;
+    opacity: 0.6;
+  }
+  .quiz-explanation {
+    margin-top: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: none;
+  }
+  .quiz-explanation.show { display: block; }
+  .quiz-explanation.correct-expl {
+    background: #1a3329;
+    border: 1px solid #2d5a3f;
+    color: var(--accent);
+  }
+  .quiz-explanation.wrong-expl {
+    background: #3a1a1a;
+    border: 1px solid #5a2d2d;
+    color: var(--danger);
+  }
+
+  /* ── Callout ──────────────────────── */
+  .callout {
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  .callout-info {
+    background: #1a2535;
+    border-left: 3px solid var(--accent2);
+  }
+  .callout-warn {
+    background: #2a2515;
+    border-left: 3px solid var(--accent4);
+  }
+  .callout-key {
+    background: #1a3329;
+    border-left: 3px solid var(--accent);
+  }
+  .callout-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .callout-info .callout-title { color: var(--accent2); }
+  .callout-warn .callout-title { color: var(--accent4); }
+  .callout-key .callout-title { color: var(--accent); }
+
+  ul, ol { padding-left: 24px; margin-bottom: 16px; }
+  li { margin-bottom: 6px; font-size: 14px; }
+
+  .section-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+  .section-nav button {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .section-nav button:hover {
+    border-color: var(--accent);
+    background: var(--surface2);
+  }
+  .section-nav button:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  /* ── Flashcard ────────────────────── */
+  .flashcard-deck {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .flashcard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .flashcard-q {
+    padding: 14px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .flashcard-q::after {
+    content: '+';
+    color: var(--text-dim);
+    font-size: 18px;
+    transition: transform 0.2s;
+  }
+  .flashcard.open .flashcard-q::after {
+    transform: rotate(45deg);
+  }
+  .flashcard-a {
+    padding: 0 20px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s, padding 0.3s;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+  .flashcard.open .flashcard-a {
+    max-height: 500px;
+    padding: 0 20px 16px;
+  }
+
+  /* ── Mobile ───────────────────────── */
+  @media (max-width: 768px) {
+    nav { display: none; }
+    main { margin-left: 0; padding: 24px 20px; }
+  }
+
+  /* ── Animated Data Flow ──────────── */
+  .live-flow {
+    position: relative;
+    height: 80px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 16px 0 24px;
+    overflow: hidden;
+  }
+  .live-flow .track {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--border);
+    transform: translateY(-50%);
+  }
+  .live-flow .dot {
+    position: absolute;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    transform: translateY(-50%);
+    animation: moveDot 3s linear infinite;
+  }
+  .live-flow .dot:nth-child(2) { animation-delay: 0.6s; }
+  .live-flow .dot:nth-child(3) { animation-delay: 1.2s; }
+  .live-flow .dot:nth-child(4) { animation-delay: 1.8s; }
+  .live-flow .dot:nth-child(5) { animation-delay: 2.4s; }
+  .live-flow .dot.green { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .live-flow .dot.blue { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+  .live-flow .dot.orange { background: var(--accent4); box-shadow: 0 0 8px var(--accent4); }
+  @keyframes moveDot {
+    0% { left: -12px; opacity: 0; }
+    5% { opacity: 1; }
+    95% { opacity: 1; }
+    100% { left: 100%; opacity: 0; }
+  }
+  .live-flow .label {
+    position: absolute;
+    top: 8px;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .live-flow .label-left { left: 12px; }
+  .live-flow .label-center { left: 50%; transform: translateX(-50%); }
+  .live-flow .label-right { right: 12px; }
+
+  .score-display {
+    font-size: 14px;
+    color: var(--text-dim);
+    text-align: center;
+    margin: 12px 0;
+  }
+  .score-display strong { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<nav>
+  <h1>Project Plant Study Guide</h1>
+  <div class="progress-bar">
+    <span>Study Progress</span>
+    <div class="bar"><div class="fill" id="progressFill" style="width: 0%"></div></div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-title">Overview</div>
+    <a href="#overview" class="active" onclick="showSection('overview')">System Overview</a>
+    <a href="#dataflow" onclick="showSection('dataflow')">Data Flow Walk-through</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-title">Core Infrastructure</div>
+    <a href="#kafka" onclick="showSection('kafka')">Apache Kafka</a>
+    <a href="#postgres" onclick="showSection('postgres')">PostgreSQL</a>
+    <a href="#redis" onclick="showSection('redis')">Redis</a>
+    <a href="#docker" onclick="showSection('docker')">Docker & Compose</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-title">Languages & Frameworks</div>
+    <a href="#golang" onclick="showSection('golang')">Go (Golang)</a>
+    <a href="#python" onclick="showSection('python')">Python & asyncio</a>
+    <a href="#nextjs" onclick="showSection('nextjs')">Next.js & React</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-title">Architecture Patterns</div>
+    <a href="#microservices" onclick="showSection('microservices')">Microservices</a>
+    <a href="#cqrs" onclick="showSection('cqrs')">CQRS Pattern</a>
+    <a href="#websockets" onclick="showSection('websockets')">WebSockets & Pub/Sub</a>
+    <a href="#adapters" onclick="showSection('adapters')">Adapter Pattern</a>
+    <a href="#jsonschema" onclick="showSection('jsonschema')">JSON Schema & Contracts</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-title">Testing & DevOps</div>
+    <a href="#tdd" onclick="showSection('tdd')">Test-Driven Development</a>
+    <a href="#loadtest" onclick="showSection('loadtest')">Load Testing (k6 + vegeta)</a>
+    <a href="#ci" onclick="showSection('ci')">CI/CD & Observability</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-title">Exam Prep</div>
+    <a href="#quiz" onclick="showSection('quiz')">Final Quiz (30 Questions)</a>
+    <a href="#flashcards" onclick="showSection('flashcards')">Flashcards</a>
+    <a href="#cheatsheet" onclick="showSection('cheatsheet')">Cheat Sheet</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- OVERVIEW -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="overview" class="active">
+  <h2><span class="emoji">&#127793;</span> Project Plant — System Overview</h2>
+  <p class="subtitle">A distributed microservices system for ingesting, processing, and alerting on IoT sensor telemetry.</p>
+
+  <h3>What Does It Do?</h3>
+  <p>Imagine you have 100 plant sensors in a greenhouse. Each sensor reports temperature, humidity, and soil moisture every second. Project Plant:</p>
+  <ol>
+    <li><strong>Collects</strong> all that data through a fast API (Go Ingestion Service)</li>
+    <li><strong>Buffers</strong> it through a message queue (Kafka) so nothing gets lost</li>
+    <li><strong>Processes</strong> it with rules like "alert if temperature > 40&deg;C" (Go Processor)</li>
+    <li><strong>Stores</strong> it in two places: fast cache (Redis) + permanent history (PostgreSQL)</li>
+    <li><strong>Displays</strong> it on a real-time dashboard (Next.js frontend)</li>
+  </ol>
+
+  <h3>The Architecture at a Glance</h3>
+  <div class="flow-demo">
+    <div class="flow-title">Data flows left to right through the system</div>
+    <div class="flow-nodes">
+      <div class="flow-node node-device">Sensor<br><small>Python</small></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-node node-api">Ingestion<br><small>Go API</small></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-node node-kafka">Kafka<br><small>Queue</small></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-node node-processor">Processor<br><small>Go</small></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-node node-pg">Postgres<br><small>History</small></div>
+    </div>
+    <br>
+    <div class="flow-nodes">
+      <div style="min-width:100px"></div>
+      <div style="min-width:100px"></div>
+      <div style="min-width:100px"></div>
+      <div style="min-width:100px"></div>
+      <div class="flow-node node-redis">Redis<br><small>Cache + Alerts</small></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-node node-dash">Dashboard<br><small>Next.js</small></div>
+    </div>
+  </div>
+
+  <h3>Why So Many Pieces?</h3>
+  <p>Each piece solves a specific problem. A single monolithic app <em>could</em> do all of this, but it would:</p>
+  <ul>
+    <li><strong>Crash under load</strong> &mdash; 1,000 sensors hitting a database directly would overwhelm it</li>
+    <li><strong>Lose data</strong> &mdash; if the database goes down, all incoming data is lost</li>
+    <li><strong>Be slow to change</strong> &mdash; modifying alert rules shouldn't require redeploying the API</li>
+    <li><strong>Scale poorly</strong> &mdash; you can't independently scale the read vs. write path</li>
+  </ul>
+
+  <div class="callout callout-key">
+    <div class="callout-title">Key Takeaway</div>
+    Each technology in this stack exists because it solves a specific problem better than the alternatives. This guide teaches you what each one does and <em>why</em> we chose it.
+  </div>
+
+  <h3>Technologies Used</h3>
+  <table>
+    <tr><th>Technology</th><th>Role in Project Plant</th><th>Category</th></tr>
+    <tr><td><strong>Apache Kafka</strong></td><td>Message queue between ingestion and processing</td><td><span class="tag tag-infra">Infra</span></td></tr>
+    <tr><td><strong>PostgreSQL 17</strong></td><td>Permanent storage for all telemetry history</td><td><span class="tag tag-infra">Infra</span></td></tr>
+    <tr><td><strong>Redis 8</strong></td><td>Fast cache for latest readings + real-time alerts</td><td><span class="tag tag-infra">Infra</span></td></tr>
+    <tr><td><strong>Go</strong></td><td>Ingestion API, Processor, Dashboard API</td><td><span class="tag tag-go">Language</span></td></tr>
+    <tr><td><strong>Python</strong></td><td>Device simulators, computer vision</td><td><span class="tag tag-python">Language</span></td></tr>
+    <tr><td><strong>Next.js / React</strong></td><td>Real-time frontend dashboard</td><td><span class="tag tag-frontend">Frontend</span></td></tr>
+    <tr><td><strong>Docker</strong></td><td>Packaging and running every service</td><td><span class="tag tag-infra">Infra</span></td></tr>
+    <tr><td><strong>JSON Schema</strong></td><td>Single source of truth for data contracts</td><td><span class="tag tag-pattern">Pattern</span></td></tr>
+    <tr><td><strong>k6 / vegeta</strong></td><td>Load testing and performance validation</td><td><span class="tag tag-testing">Testing</span></td></tr>
+    <tr><td><strong>testcontainers</strong></td><td>Real Kafka/Postgres/Redis in automated tests</td><td><span class="tag tag-testing">Testing</span></td></tr>
+  </table>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- DATA FLOW -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="dataflow">
+  <h2><span class="emoji">&#128640;</span> Data Flow Walk-through</h2>
+  <p class="subtitle">Follow a single sensor reading from a plant all the way to the dashboard.</p>
+
+  <h3>Step 1: The Sensor Generates a Reading</h3>
+  <p>A simulated device in Python generates a JSON payload every second:</p>
+  <pre><code>{
+  "device_id": "sensor-greenhouse-014",
+  "timestamp": "2026-04-09T14:30:00Z",
+  "temperature": 42.3,
+  "humidity": 65.1,
+  "soil_moisture": 28.7
+}</code></pre>
+  <p>The <code>temperature</code> of 42.3&deg;C is above the "high temperature" threshold of 40&deg;C. This will eventually trigger an alert.</p>
+
+  <h3>Step 2: HTTP POST to Ingestion API</h3>
+  <p>The simulator sends this JSON as an HTTP POST request to the Go ingestion service:</p>
+  <pre><code>POST /api/v1/telemetry HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
+X-API-Key: sk-device-014-abc123
+
+{"device_id": "sensor-greenhouse-014", "timestamp": "...", ...}</code></pre>
+  <p>The Ingestion API does three things in order:</p>
+  <ol>
+    <li><strong>Authenticate:</strong> Is this API key valid? Does it match device-014?</li>
+    <li><strong>Validate:</strong> Is the JSON well-formed? Are all fields present? Are values in range?</li>
+    <li><strong>Produce:</strong> Push the event to a Kafka topic and respond <code>202 Accepted</code></li>
+  </ol>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Why 202, not 200?</div>
+    <code>202 Accepted</code> means "I received your data and will process it, but processing hasn't finished yet." The data is safely in Kafka but hasn't reached Postgres yet. This is honest HTTP semantics.
+  </div>
+
+  <h3>Step 3: Kafka Holds the Event</h3>
+  <p>The event sits in the <code>telemetry.events</code> Kafka topic. Think of it as a durable queue:</p>
+  <div class="diagram"><span class="hl4">telemetry.events</span> topic
+┌──────────┬──────────┬──────────┬──────────┬──────────┐
+│ offset 0 │ offset 1 │ offset 2 │ <span class="hl">offset 3</span> │   ...    │ &larr; new events appended here
+│ event    │ event    │ event    │ <span class="hl">OUR EVT</span>  │          │
+└──────────┴──────────┴──────────┴──────────┴──────────┘
+                                      &uarr;
+                             Consumer reads from here</div>
+  <p>Even if the Processor is temporarily down, the event stays in Kafka until it's consumed. <strong>Zero data loss.</strong></p>
+
+  <h3>Step 4: Processor Consumes and Evaluates</h3>
+  <p>The Go Processor service reads the event from Kafka and runs it through the <strong>Rule Engine</strong>:</p>
+  <pre><code>// Rule: If temperature > 40, fire "high_temperature" alert
+rules := []Rule{
+    {Name: "high_temperature", Field: "temperature",
+     Operator: ">", Threshold: 40, Severity: "warning"},
+}
+
+// Our event has temperature=42.3 → ALERT TRIGGERED!</code></pre>
+
+  <h3>Step 5: Write to Storage</h3>
+  <p>The Processor writes to three places simultaneously:</p>
+  <table>
+    <tr><th>Destination</th><th>What's Written</th><th>Why</th></tr>
+    <tr><td><strong>PostgreSQL</strong></td><td>Full event record</td><td>Permanent history for charts and queries</td></tr>
+    <tr><td><strong>Redis (SET)</strong></td><td>Latest reading for device-014</td><td>Instant lookup for dashboard</td></tr>
+    <tr><td><strong>Redis (PUBLISH)</strong></td><td>Alert: "high_temperature on device-014"</td><td>Real-time push to dashboard</td></tr>
+  </table>
+
+  <h3>Step 6: Dashboard Receives the Alert</h3>
+  <p>The Dashboard API is subscribed to Redis Pub/Sub. When the alert is published, it pushes it over a WebSocket to the browser:</p>
+  <div class="diagram">Redis PUBLISH "alerts:sensor-greenhouse-014"
+    &darr;
+Dashboard API (Go) &larr; subscribed to "alerts:*"
+    &darr; WebSocket push
+Browser (Next.js) &larr; alert toast appears instantly</div>
+
+  <div class="live-flow">
+    <span class="label label-left">Sensor</span>
+    <span class="label label-center">Kafka &rarr; Processor</span>
+    <span class="label label-right">Dashboard</span>
+    <div class="track"></div>
+    <div class="dot green"></div>
+    <div class="dot blue"></div>
+    <div class="dot green"></div>
+    <div class="dot orange"></div>
+    <div class="dot green"></div>
+  </div>
+
+  <div class="callout callout-key">
+    <div class="callout-title">The Big Picture</div>
+    Sensor &rarr; HTTP &rarr; Kafka &rarr; Rule Engine &rarr; Postgres + Redis &rarr; WebSocket &rarr; Dashboard. Every arrow is a decoupling point. Every service can fail independently without losing data.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- KAFKA -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="kafka">
+  <h2><span class="emoji">&#128230;</span> Apache Kafka</h2>
+  <p class="subtitle">A distributed event streaming platform that acts as the nervous system of Project Plant.</p>
+  <span class="tag tag-infra">Infrastructure</span>
+
+  <h3>What is Kafka?</h3>
+  <p>Kafka is a <strong>distributed log</strong>. Think of it as a really fast, really durable conveyor belt for data. Producers put messages on the belt, consumers take messages off. The belt remembers everything for a configurable period (days, weeks, forever).</p>
+
+  <div class="compare">
+    <div class="bad">
+      <div class="label">Without Kafka</div>
+      <p>Sensor &rarr; Database directly</p>
+      <ul>
+        <li>Database overloaded at 1000 writes/sec</li>
+        <li>If DB is down, data is <strong>lost forever</strong></li>
+        <li>Can't add new consumers without changing the API</li>
+      </ul>
+    </div>
+    <div class="good">
+      <div class="label">With Kafka</div>
+      <p>Sensor &rarr; Kafka &rarr; Database</p>
+      <ul>
+        <li>Kafka handles 100K+ messages/sec easily</li>
+        <li>If DB is down, Kafka <strong>retains all events</strong></li>
+        <li>Add new consumers (analytics, ML) with zero changes</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Key Concepts</h3>
+
+  <h4>Topics</h4>
+  <p>A topic is a named category of messages. In Project Plant, we have one main topic: <code>telemetry.events</code>. Think of it as a database table, but append-only.</p>
+
+  <h4>Producers</h4>
+  <p>Producers write messages to topics. Our Go Ingestion API is a producer &mdash; it receives HTTP requests and writes the payload to Kafka.</p>
+  <pre><code>// Go — producing a message to Kafka
+writer := kafka.NewWriter(kafka.WriterConfig{
+    Brokers: []string{"localhost:9092"},
+    Topic:   "telemetry.events",
+})
+
+err := writer.WriteMessages(ctx, kafka.Message{
+    Key:   []byte(event.DeviceID),  // same device → same partition
+    Value: eventJSON,
+})</code></pre>
+
+  <h4>Consumers</h4>
+  <p>Consumers read messages from topics. Our Go Processor is a consumer &mdash; it reads events and processes them.</p>
+  <pre><code>// Go — consuming messages from Kafka
+reader := kafka.NewReader(kafka.ReaderConfig{
+    Brokers: []string{"localhost:9092"},
+    Topic:   "telemetry.events",
+    GroupID: "processor-group",
+})
+
+for {
+    msg, err := reader.ReadMessage(ctx)
+    // process msg.Value (the telemetry event JSON)
+}</code></pre>
+
+  <h4>Partitions</h4>
+  <p>A topic can be split into <strong>partitions</strong> for parallelism. Messages with the same key (e.g., <code>device_id</code>) always go to the same partition, guaranteeing order per device.</p>
+  <div class="diagram"><span class="hl4">telemetry.events</span> topic with 3 partitions:
+
+Partition 0: [sensor-001, sensor-001, sensor-001, ...]  &larr; all sensor-001 events in order
+Partition 1: [sensor-002, sensor-002, sensor-002, ...]  &larr; all sensor-002 events in order
+Partition 2: [sensor-003, sensor-003, sensor-003, ...]  &larr; all sensor-003 events in order
+
+3 consumer instances can each read one partition = 3x throughput</div>
+
+  <h4>Offsets</h4>
+  <p>Every message in a partition has a sequential <strong>offset</strong> (0, 1, 2, ...). Consumers track which offset they've read up to. If a consumer crashes, it restarts from the last committed offset &mdash; <strong>no data loss, no duplicates</strong>.</p>
+
+  <h4>Consumer Groups</h4>
+  <p>Multiple consumers in the same <strong>group</strong> share the work. Kafka assigns partitions to consumers in the group so each message is processed by exactly one consumer. If a consumer dies, its partitions are automatically reassigned.</p>
+
+  <h4>KRaft Mode (No Zookeeper)</h4>
+  <p>Older Kafka versions needed a separate service called Zookeeper for coordination. Since Kafka 3.3+, this is handled internally by the <strong>KRaft</strong> consensus protocol. Project Plant uses KRaft &mdash; one fewer service to manage.</p>
+
+  <h3>Kafka in Project Plant's docker-compose.yml</h3>
+  <pre><code>kafka:
+  image: confluentinc/cp-kafka:7.9.0
+  environment:
+    KAFKA_PROCESS_ROLES: broker,controller     # KRaft: both roles in one node
+    KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+    KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092  # external access
+    KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"     # create topics on first write
+  healthcheck:
+    test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]</code></pre>
+
+  <div class="callout callout-key">
+    <div class="callout-title">Kafka Resilience Guarantee</div>
+    If PostgreSQL goes down for 10 minutes, the Processor stops writing but <strong>Kafka retains all events</strong>. When Postgres recovers, the Processor resumes from the last committed offset and processes every buffered event. Zero data loss.
+  </div>
+
+  <h3>Real-World Case Study: Verkada</h3>
+  <p>Verkada has thousands of cameras and sensors sending data continuously. They use event streaming (like Kafka) to decouple device communication from backend processing. When a camera detects motion, it publishes an event. Multiple downstream services (video storage, analytics, alerting) consume the same event independently. This is the exact pattern Project Plant implements.</p>
+
+  <div class="quiz" data-correct="2">
+    <div class="quiz-question">Q: Why does the Ingestion API write to Kafka instead of directly to PostgreSQL?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-idx="0">Kafka is faster at storing data than PostgreSQL</div>
+      <div class="quiz-option" data-idx="1">PostgreSQL doesn't support JSON data</div>
+      <div class="quiz-option" data-idx="2">Kafka buffers events so the database isn't overwhelmed, and retains them if the database is temporarily down</div>
+      <div class="quiz-option" data-idx="3">Kafka is required for all microservice architectures</div>
+    </div>
+    <div class="quiz-explanation correct-expl">Correct! Kafka acts as a buffer (shock absorber) between the high-throughput API and the database. It also provides durability: if Postgres is down, events are safely stored in Kafka until Postgres recovers.</div>
+    <div class="quiz-explanation wrong-expl">Not quite. Kafka's main value here is decoupling and resilience: it buffers high-throughput writes and retains events even when downstream services are temporarily unavailable.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- POSTGRESQL -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="postgres">
+  <h2><span class="emoji">&#128451;</span> PostgreSQL</h2>
+  <p class="subtitle">The permanent, reliable storage for all historical telemetry data.</p>
+  <span class="tag tag-infra">Infrastructure</span>
+
+  <h3>What is PostgreSQL?</h3>
+  <p>PostgreSQL (often called "Postgres") is a <strong>relational database</strong>. It stores data in tables with rows and columns, and lets you query it with SQL. It's the gold standard for data you can't afford to lose.</p>
+
+  <h3>Why PostgreSQL in Project Plant?</h3>
+  <p>We need to answer questions like:</p>
+  <ul>
+    <li>"What was the temperature of sensor-014 at 3 PM last Tuesday?"</li>
+    <li>"Show me all alerts from the last 24 hours sorted by severity"</li>
+    <li>"How many events did we ingest in the last hour?"</li>
+  </ul>
+  <p>Redis is fast but ephemeral. Kafka is durable but not designed for complex queries. PostgreSQL gives us <strong>durable, queryable, indexed storage</strong>.</p>
+
+  <h3>Schema Design</h3>
+  <p>Project Plant uses three main tables:</p>
+
+  <pre><code>-- Table 1: Every sensor reading ever received
+CREATE TABLE telemetry_events (
+    id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    device_id    TEXT NOT NULL,
+    temperature  DOUBLE PRECISION NOT NULL,
+    humidity     DOUBLE PRECISION NOT NULL,
+    soil_moisture DOUBLE PRECISION NOT NULL,
+    recorded_at  TIMESTAMPTZ NOT NULL,  -- when the sensor took the reading
+    ingested_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()  -- when we received it
+);
+
+-- This index makes "get all readings for device X in time range" fast
+CREATE INDEX idx_telemetry_device_time
+    ON telemetry_events (device_id, recorded_at DESC);
+
+-- Table 2: Alerts triggered by the rule engine
+CREATE TABLE alerts (
+    id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    device_id    TEXT NOT NULL,
+    rule_name    TEXT NOT NULL,          -- e.g., "high_temperature"
+    severity     TEXT NOT NULL,          -- "warning", "critical"
+    reading      JSONB NOT NULL,         -- the reading that triggered it
+    triggered_at TIMESTAMPTZ NOT NULL,
+    resolved_at  TIMESTAMPTZ            -- NULL if still active
+);
+
+-- Table 3: Registered devices
+CREATE TABLE devices (
+    device_id     TEXT PRIMARY KEY,
+    api_key_hash  TEXT NOT NULL,
+    profile       TEXT NOT NULL DEFAULT 'default',
+    registered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_seen_at  TIMESTAMPTZ
+);</code></pre>
+
+  <h3>Key Concepts</h3>
+
+  <h4>Indexes</h4>
+  <p>Without an index, finding all readings for <code>sensor-014</code> requires scanning every row in the table (millions of rows = slow). An index is like the index in a textbook &mdash; it lets the database jump directly to the right rows.</p>
+  <pre><code>-- Without index: "Scan 10 million rows" → 5 seconds
+-- With index:    "Look up sensor-014 in B-tree" → 5 milliseconds
+SELECT * FROM telemetry_events
+WHERE device_id = 'sensor-014'
+AND recorded_at > NOW() - INTERVAL '1 hour'
+ORDER BY recorded_at DESC;</code></pre>
+
+  <h4>Migrations</h4>
+  <p>Database schema changes are managed through <strong>migration files</strong> &mdash; numbered SQL scripts that are applied in order. This ensures every environment (dev, test, production) has the exact same schema.</p>
+  <pre><code>migrations/
+├── 001_create_telemetry.up.sql    -- creates telemetry_events table
+├── 001_create_telemetry.down.sql  -- drops it (rollback)
+├── 002_create_devices.up.sql
+├── 002_create_devices.down.sql
+├── 003_create_alerts.up.sql
+└── 003_create_alerts.down.sql</code></pre>
+
+  <h4>Deduplication</h4>
+  <p>If the Kafka consumer crashes and restarts, it might re-read the same event. We prevent duplicate rows with:</p>
+  <pre><code>INSERT INTO telemetry_events (device_id, temperature, ..., recorded_at)
+VALUES ($1, $2, ..., $5)
+ON CONFLICT (device_id, recorded_at) DO NOTHING;
+-- If this exact device + timestamp already exists, skip it</code></pre>
+
+  <h4>Connection Pooling (pgx)</h4>
+  <p>Go uses the <code>pgx</code> library to talk to Postgres. It maintains a pool of connections so we don't open/close a connection for every query:</p>
+  <pre><code>pool, err := pgxpool.New(ctx, "postgres://plant:plant@localhost:5432/plantdb")
+// pool manages ~10-25 connections, reusing them for queries</code></pre>
+
+  <h3>Project Plant's docker-compose.yml</h3>
+  <pre><code>postgres:
+  image: postgres:17-alpine          # latest stable, small image
+  environment:
+    POSTGRES_DB: plantdb
+    POSTGRES_USER: plant
+    POSTGRES_PASSWORD: plant
+  volumes:
+    - pgdata:/var/lib/postgresql/data  # data survives container restarts
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U plant -d plantdb"]</code></pre>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Test vs. Development databases</div>
+    The test <code>docker-compose.test.yml</code> uses <code>tmpfs</code> (RAM disk) instead of a volume, so the database is wiped after every test run. Fast and clean.
+  </div>
+
+  <div class="quiz" data-correct="1">
+    <div class="quiz-question">Q: What does <code>ON CONFLICT (device_id, recorded_at) DO NOTHING</code> prevent?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-idx="0">It prevents inserting events with invalid timestamps</div>
+      <div class="quiz-option" data-idx="1">It prevents duplicate rows when the Kafka consumer re-processes the same event after a crash</div>
+      <div class="quiz-option" data-idx="2">It prevents two devices from having the same ID</div>
+      <div class="quiz-option" data-idx="3">It speeds up SELECT queries by creating an index</div>
+    </div>
+    <div class="quiz-explanation correct-expl">Correct! This is an idempotency mechanism. If the consumer crashes and replays a message from Kafka, the same (device_id, recorded_at) pair would be inserted again. ON CONFLICT DO NOTHING silently skips the duplicate.</div>
+    <div class="quiz-explanation wrong-expl">Not quite. This clause specifically handles the case where the same event is inserted twice (e.g., after a consumer crash/restart). It's an idempotency mechanism.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- REDIS -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="redis">
+  <h2><span class="emoji">&#9889;</span> Redis</h2>
+  <p class="subtitle">An in-memory data store used for instant lookups and real-time alert delivery.</p>
+  <span class="tag tag-infra">Infrastructure</span>
+
+  <h3>What is Redis?</h3>
+  <p>Redis is an <strong>in-memory key-value store</strong>. It stores data in RAM, which makes it incredibly fast &mdash; reads take <strong>microseconds</strong> instead of the milliseconds that disk-based databases need.</p>
+
+  <h3>Redis Plays Two Roles in Project Plant</h3>
+
+  <h4>Role 1: Hot Cache (Latest Readings)</h4>
+  <p>When the dashboard loads, it needs to show the current state of all 100 devices. Querying Postgres for the latest reading of each device is slow. Instead, we keep the latest reading in Redis:</p>
+  <pre><code># Store the latest reading (Go Processor does this)
+SET device:sensor-014:latest '{
+  "temperature": 42.3,
+  "humidity": 65.1,
+  "soil_moisture": 28.7,
+  "timestamp": "2026-04-09T14:30:00Z"
+}'
+
+# Set a TTL (Time-To-Live) of 5 minutes
+EXPIRE device:sensor-014:latest 300
+
+# Dashboard reads it — takes < 1ms
+GET device:sensor-014:latest</code></pre>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">Why TTL?</div>
+    If a device goes offline, we don't want stale data to appear as "current." The 5-minute TTL means the key automatically disappears if no new reading arrives, and the dashboard can show "offline" status.
+  </div>
+
+  <h4>Role 2: Pub/Sub (Real-Time Alerts)</h4>
+  <p>Redis Pub/Sub is a message broadcasting system. Publishers send messages to channels; all subscribers on that channel receive them instantly.</p>
+  <pre><code># Processor publishes an alert
+PUBLISH alerts:sensor-014 '{
+  "alert_id": "alert-789",
+  "rule": "high_temperature",
+  "severity": "warning",
+  "reading": {"temperature": 42.3}
+}'
+
+# Dashboard API is subscribed to all alert channels
+SUBSCRIBE alerts:*
+# → receives the message instantly
+# → pushes it over WebSocket to the browser</code></pre>
+
+  <div class="diagram"><span class="hl">Pub/Sub Flow:</span>
+
+Processor ──PUBLISH──▶ Redis Channel "alerts:sensor-014"
+                              │
+                    ┌─────────┼─────────┐
+                    ▼         ▼         ▼
+             Dashboard   Dashboard   Dashboard
+             API #1      API #2      API #3
+                │            │           │
+                ▼            ▼           ▼
+             Browser     Browser     Browser
+             (WS)        (WS)        (WS)</div>
+
+  <h3>Redis vs. Postgres: When to Use Which</h3>
+  <table>
+    <tr><th>Question</th><th>Use Redis</th><th>Use Postgres</th></tr>
+    <tr><td>"What is sensor-014 reading right now?"</td><td>GET key &mdash; <1ms</td><td></td></tr>
+    <tr><td>"What did sensor-014 read last Tuesday?"</td><td></td><td>SQL query with index</td></tr>
+    <tr><td>"Show all devices and their current state"</td><td>MGET all keys &mdash; <5ms</td><td></td></tr>
+    <tr><td>"Average temperature per device per day"</td><td></td><td>SQL aggregate query</td></tr>
+    <tr><td>"Push an alert to the dashboard NOW"</td><td>PUBLISH &mdash; instant</td><td></td></tr>
+  </table>
+
+  <div class="callout callout-key">
+    <div class="callout-title">This is the CQRS pattern</div>
+    Using Redis for fast reads and Postgres for durable writes is an example of <strong>Command Query Responsibility Segregation</strong>. We'll cover this in detail in the Architecture Patterns section.
+  </div>
+
+  <div class="quiz" data-correct="3">
+    <div class="quiz-question">Q: What happens to a Redis key with a 5-minute TTL if the sensor stops sending data?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-idx="0">The key stays forever with the last value</div>
+      <div class="quiz-option" data-idx="1">Redis raises an error</div>
+      <div class="quiz-option" data-idx="2">The key is moved to Postgres automatically</div>
+      <div class="quiz-option" data-idx="3">The key automatically disappears after 5 minutes, and the dashboard can show "offline"</div>
+    </div>
+    <div class="quiz-explanation correct-expl">Correct! TTL (Time-To-Live) causes Redis to automatically delete the key after the specified duration. This prevents stale data from appearing as current when a device goes offline.</div>
+    <div class="quiz-explanation wrong-expl">Not quite. TTL means the key automatically expires and is deleted after the specified time. No new SET means no TTL reset, so the key disappears — the dashboard then knows the device is offline.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- DOCKER -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="docker">
+  <h2><span class="emoji">&#128179;</span> Docker & Docker Compose</h2>
+  <p class="subtitle">Containerization: packaging applications so they run the same everywhere.</p>
+  <span class="tag tag-infra">Infrastructure</span>
+
+  <h3>What is Docker?</h3>
+  <p>Docker packages an application and all its dependencies into a <strong>container</strong> &mdash; a lightweight, isolated environment that runs the same on your laptop, your teammate's laptop, and in production.</p>
+
+  <div class="compare">
+    <div class="bad">
+      <div class="label">Without Docker</div>
+      <p>"It works on my machine!"</p>
+      <ul>
+        <li>Install Go 1.22, Python 3.11, Kafka, Postgres, Redis manually</li>
+        <li>Configure paths, ports, environment variables</li>
+        <li>Different OS? Different versions? Hours of debugging</li>
+      </ul>
+    </div>
+    <div class="good">
+      <div class="label">With Docker</div>
+      <p><code>docker compose up</code></p>
+      <ul>
+        <li>One command starts everything</li>
+        <li>Exact same versions on every machine</li>
+        <li>Isolated: won't conflict with other projects</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Key Concepts</h3>
+
+  <h4>Images</h4>
+  <p>An image is a read-only template. Think of it as a snapshot of a filesystem with an application installed. For example, <code>postgres:17-alpine</code> is an image with PostgreSQL 17 pre-installed on a minimal Linux (Alpine).</p>
+
+  <h4>Containers</h4>
+  <p>A container is a running instance of an image. You can run multiple containers from the same image. Each container is isolated &mdash; it has its own filesystem, network, and processes.</p>
+
+  <h4>Dockerfile</h4>
+  <p>A Dockerfile is a recipe for building a custom image. Each service in Project Plant has one:</p>
+  <pre><code># Dockerfile for the Go Ingestion Service
+FROM golang:1.22-alpine AS builder    # Start with Go installed
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download                    # Download dependencies
+COPY . .
+RUN go build -o /ingestion ./cmd/server  # Compile the binary
+
+FROM alpine:3.19                       # Fresh, minimal image
+COPY --from=builder /ingestion /ingestion  # Copy just the binary
+EXPOSE 8080
+CMD ["/ingestion"]                     # Run it</code></pre>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Multi-Stage Builds</div>
+    The Dockerfile above uses two stages: <code>builder</code> (has Go compiler, large) and the final image (just Alpine + binary, tiny). This keeps production images small (~15MB instead of ~1GB).
+  </div>
+
+  <h4>Docker Compose</h4>
+  <p>Docker Compose defines multiple containers that work together. Project Plant's <code>docker-compose.yml</code> starts Kafka, Postgres, and Redis with one command:</p>
+  <pre><code># Start everything
+docker compose up -d --wait
+
+# What happens:
+# 1. Downloads images (first time only)
+# 2. Creates containers for Kafka, Postgres, Redis
+# 3. Creates a shared network so they can reach each other
+# 4. Waits until health checks pass (--wait flag)
+
+# Stop everything and clean up
+docker compose down -v  # -v removes volumes (data)</code></pre>
+
+  <h4>Health Checks</h4>
+  <p>Docker health checks verify a container is actually <em>ready</em>, not just running. Kafka might take 30 seconds to initialize after the container starts:</p>
+  <pre><code>healthcheck:
+  test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+  interval: 10s     # check every 10 seconds
+  timeout: 10s      # give each check 10 seconds
+  retries: 10       # try 10 times before marking unhealthy
+  start_period: 30s # wait 30s before first check</code></pre>
+
+  <h4>Volumes vs. tmpfs</h4>
+  <table>
+    <tr><th></th><th>Named Volume</th><th>tmpfs</th></tr>
+    <tr><td><strong>Persistence</strong></td><td>Data survives container restarts</td><td>Data lost when container stops</td></tr>
+    <tr><td><strong>Use case</strong></td><td>Development database</td><td>Test database (clean state each run)</td></tr>
+    <tr><td><strong>In Project Plant</strong></td><td><code>docker-compose.yml</code></td><td><code>docker-compose.test.yml</code></td></tr>
+  </table>
+
+  <div class="quiz" data-correct="2">
+    <div class="quiz-question">Q: Why does docker-compose.test.yml use <code>tmpfs</code> for Postgres instead of a named volume?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-idx="0">tmpfs is more secure than named volumes</div>
+      <div class="quiz-option" data-idx="1">tmpfs is required for PostgreSQL to work in Docker</div>
+      <div class="quiz-option" data-idx="2">Tests need a clean database every run — tmpfs stores data in RAM and is wiped when the container stops</div>
+      <div class="quiz-option" data-idx="3">tmpfs is faster for reading data back</div>
+    </div>
+    <div class="quiz-explanation correct-expl">Correct! Tests need deterministic, isolated environments. tmpfs provides a blank-slate database every time the container starts, ensuring no leftover data from previous test runs affects results.</div>
+    <div class="quiz-explanation wrong-expl">While tmpfs is faster (RAM vs disk), the primary reason is test isolation: each test run starts with a completely clean database, ensuring no leftover state from previous runs.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- GO -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="golang">
+  <h2><span class="emoji">&#128054;</span> Go (Golang)</h2>
+  <p class="subtitle">The language powering all three backend services: Ingestion, Processor, and Dashboard API.</p>
+  <span class="tag tag-go">Language</span>
+
+  <h3>Why Go for Backend Services?</h3>
+  <ul>
+    <li><strong>Concurrency:</strong> Goroutines handle thousands of simultaneous connections with minimal memory</li>
+    <li><strong>Performance:</strong> Compiled to native code &mdash; as fast as C, easier to write</li>
+    <li><strong>Simplicity:</strong> Small language spec (25 keywords). Easy to learn, easy to read others' code</li>
+    <li><strong>Standard library:</strong> Production-grade HTTP server built in &mdash; no framework needed</li>
+    <li><strong>Fast compilation:</strong> Compile a full service in &lt;5 seconds</li>
+    <li><strong>Verkada uses Go</strong> for their backend services &mdash; directly relevant experience</li>
+  </ul>
+
+  <h3>Key Go Concepts Used in Project Plant</h3>
+
+  <h4>Goroutines</h4>
+  <p>A goroutine is a lightweight thread managed by the Go runtime. They cost ~2KB of memory (vs ~1MB for OS threads). You can run millions of them.</p>
+  <pre><code>// Each incoming HTTP request runs in its own goroutine automatically
+// The Go HTTP server does this for you:
+http.HandleFunc("/api/v1/telemetry", handler)
+http.ListenAndServe(":8080", nil)
+// → 1000 simultaneous requests = 1000 goroutines ≈ 2MB of memory</code></pre>
+
+  <h4>Interfaces</h4>
+  <p>Go interfaces enable <strong>dependency injection</strong> and <strong>testability</strong>. Project Plant defines interfaces for every external dependency:</p>
+  <pre><code>// In the Ingestion API, we define WHAT we need, not HOW it works
+type EventProducer interface {
+    Produce(ctx context.Context, event TelemetryEvent) error
+    Close() error
+}
+
+// Real implementation: writes to Kafka
+type KafkaProducer struct { writer *kafka.Writer }
+func (k *KafkaProducer) Produce(ctx context.Context, event TelemetryEvent) error {
+    return k.writer.WriteMessages(ctx, kafka.Message{Value: eventJSON})
+}
+
+// Test implementation: records calls in memory
+type MockProducer struct { events []TelemetryEvent }
+func (m *MockProducer) Produce(ctx context.Context, event TelemetryEvent) error {
+    m.events = append(m.events, event)
+    return nil
+}
+
+// The handler doesn't care which one it gets!
+func NewHandler(producer EventProducer) http.Handler { ... }</code></pre>
+
+  <div class="callout callout-key">
+    <div class="callout-title">Why Interfaces Matter</div>
+    Without interfaces, unit-testing the HTTP handler would require a running Kafka broker. With interfaces, we swap in a mock and test the handler in isolation in milliseconds.
+  </div>
+
+  <h4>Table-Driven Tests</h4>
+  <p>Go's idiomatic testing pattern. Define all test cases in a slice and loop through them:</p>
+  <pre><code>func TestValidate(t *testing.T) {
+    tests := []struct {
+        name    string
+        event   TelemetryEvent
+        wantErr bool
+    }{
+        {"valid event", TelemetryEvent{DeviceID: "d1", Temperature: 25}, false},
+        {"empty device ID", TelemetryEvent{DeviceID: ""}, true},
+        {"temperature too high", TelemetryEvent{DeviceID: "d1", Temperature: 81}, true},
+        {"temperature too low", TelemetryEvent{DeviceID: "d1", Temperature: -41}, true},
+        {"boundary min temp", TelemetryEvent{DeviceID: "d1", Temperature: -40}, false},
+        {"boundary max temp", TelemetryEvent{DeviceID: "d1", Temperature: 80}, false},
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            err := tt.event.Validate()
+            if (err != nil) != tt.wantErr {
+                t.Errorf("Validate() error = %v, wantErr = %v", err, tt.wantErr)
+            }
+        })
+    }
+}</code></pre>
+
+  <h4>Build Tags for Test Separation</h4>
+  <p>Integration tests (that need real Kafka/Postgres) are separated from unit tests with build tags:</p>
+  <pre><code>//go:build integration
+
+package integration_test
+
+// This file only compiles when you run:
+// go test -tags=integration ./integration_test/...
+//
+// Regular "go test ./..." skips it entirely</code></pre>
+
+  <h4>Go Modules</h4>
+  <p>Each service has its own <code>go.mod</code> file listing dependencies. This is like <code>package.json</code> in Node.js or <code>requirements.txt</code> in Python:</p>
+  <pre><code>module github.com/danielkuo/project-plant/services/ingestion
+
+go 1.22
+
+require (
+    github.com/segmentio/kafka-go v0.4.47
+    github.com/stretchr/testify v1.9.0
+    go.uber.org/zap v1.27.0
+)</code></pre>
+
+  <div class="quiz" data-correct="1">
+    <div class="quiz-question">Q: Why does Project Plant define an <code>EventProducer</code> interface instead of using <code>KafkaProducer</code> directly?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-idx="0">Kafka doesn't work with Go, so we need a wrapper</div>
+      <div class="quiz-option" data-idx="1">So we can swap in a mock during tests without needing a real Kafka broker</div>
+      <div class="quiz-option" data-idx="2">Because Go requires all types to implement interfaces</div>
+      <div class="quiz-option" data-idx="3">To make Kafka faster by adding an abstraction layer</div>
+    </div>
+    <div class="quiz-explanation correct-expl">Correct! Interfaces enable dependency injection. The HTTP handler is tested with a MockProducer (fast, no infrastructure needed). In production, a real KafkaProducer is injected. Same code, different implementations.</div>
+    <div class="quiz-explanation wrong-expl">The main reason is testability through dependency injection. The handler depends on the EventProducer interface, so we can inject a mock for unit tests and real Kafka for integration tests.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PYTHON -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="python">
+  <h2><span class="emoji">&#128013;</span> Python & asyncio</h2>
+  <p class="subtitle">Powers the device simulators, adapter SDK, and computer vision service.</p>
+  <span class="tag tag-python">Language</span>
+
+  <h3>Why Python for Simulators?</h3>
+  <ul>
+    <li><strong>Rapid prototyping:</strong> Faster to write simulator logic than in Go</li>
+    <li><strong>asyncio:</strong> Python's async framework lets us simulate 100+ devices concurrently</li>
+    <li><strong>Hardware ecosystem:</strong> Python has the best libraries for Raspberry Pi, sensors, GPIO</li>
+    <li><strong>Data science integration:</strong> Easy to add ML models or data analysis later</li>
+  </ul>
+
+  <h3>asyncio: Doing Many Things at Once</h3>
+  <p>asyncio lets a single Python process handle many I/O operations concurrently. Perfect for simulating 100 sensors that each send data every second.</p>
+
+  <pre><code>import asyncio
+
+class Device:
+    def __init__(self, device_id: str):
+        self.device_id = device_id
+        self.temperature = 25.0  # starting temperature
+
+    async def start(self):
+        """Generate readings at ~1Hz with realistic drift."""
+        while True:
+            # Random walk: temperature changes by -0.5 to +0.5 each tick
+            self.temperature += random.uniform(-0.5, 0.5)
+            self.temperature = max(-40, min(80, self.temperature))  # clamp to range
+
+            yield {
+                "device_id": self.device_id,
+                "timestamp": datetime.now(UTC).isoformat(),
+                "temperature": round(self.temperature, 2),
+                "humidity": round(self.humidity, 2),
+                "soil_moisture": round(self.soil_moisture, 2),
+            }
+            await asyncio.sleep(1)  # non-blocking 1-second pause</code></pre>
+
+  <div class="callout callout-info">
+    <div class="callout-title">async/await vs. threads</div>
+    <code>await asyncio.sleep(1)</code> doesn't block the thread &mdash; it says "pause this coroutine for 1 second and let other coroutines run." This means 100 Device coroutines share one thread, each taking turns. Much lighter than 100 OS threads.
+  </div>
+
+  <h3>The Fleet Orchestrator</h3>
+  <pre><code>class Fleet:
+    def __init__(self, count: int, profile: str = "tropical"):
+        self.devices = [Device(f"sensor-{i:03d}", profile) for i in range(count)]
+
+    async def run(self):
+        """Run all devices concurrently."""
+        tasks = [device.start() for device in self.devices]
+        await asyncio.gather(*tasks)  # all devices run in parallel
+
+# Start 100 simulated sensors:
+# python -m simulators --count 100 --profile tropical --api-url http://localhost:8080</code></pre>
+
+  <h3>Abstract Base Classes (ABCs)</h3>
+  <p>The Device Adapter SDK uses Python ABCs to define the interface that all sensor implementations must follow:</p>
+  <pre><code>from abc import ABC, abstractmethod
+
+class SensorAdapter(ABC):
+    """Every sensor (simulated or real hardware) implements this."""
+
+    @abstractmethod
+    async def initialize(self) -> None:
+        """Set up hardware: open GPIO, calibrate sensors."""
+        ...
+
+    @abstractmethod
+    async def read(self) -> SensorReading:
+        """Take a single reading. Returns temp, humidity, soil_moisture."""
+        ...
+
+    @abstractmethod
+    async def cleanup(self) -> None:
+        """Release hardware resources."""
+        ...
+
+# The simulated adapter (what we use now):
+class SimulatedAdapter(SensorAdapter):
+    async def read(self) -> SensorReading:
+        return SensorReading(
+            temperature=self.temp + random.uniform(-0.5, 0.5), ...
+        )
+
+# A future real hardware adapter:
+class RPiDHT22Adapter(SensorAdapter):
+    async def read(self) -> SensorReading:
+        import adafruit_dht
+        sensor = adafruit_dht.DHT22(board.D4)
+        return SensorReading(temperature=sensor.temperature, ...)</code></pre>
+
+  <h3>Testing with pytest</h3>
+  <pre><code># pytest automatically handles async test functions
+async def test_device_generates_valid_payload(device):
+    reading = await device.read()
+    assert "device_id" in reading
+    assert -40 <= reading["temperature"] <= 80
+    assert 0 <= reading["humidity"] <= 100
+    assert 0 <= reading["soil_moisture"] <= 100
+
+# Parametrized tests check multiple cases with one function
+@pytest.mark.parametrize("profile,temp_min,temp_max", [
+    ("tropical", 20, 35),
+    ("arid", 25, 50),
+    ("temperate", 5, 25),
+])
+def test_profile_constrains_temperature(profile, temp_min, temp_max):
+    p = Profile.get(profile)
+    assert p.temperature_min == temp_min
+    assert p.temperature_max == temp_max</code></pre>
+
+  <div class="quiz" data-correct="0">
+    <div class="quiz-question">Q: What does <code>await asyncio.sleep(1)</code> do differently than <code>time.sleep(1)</code>?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-idx="0">It pauses only the current coroutine, letting other coroutines run during the pause</div>
+      <div class="quiz-option" data-idx="1">It sleeps for exactly 1 millisecond instead of 1 second</div>
+      <div class="quiz-option" data-idx="2">It runs in a separate thread automatically</div>
+      <div class="quiz-option" data-idx="3">There is no difference; they are interchangeable</div>
+    </div>
+    <div class="quiz-explanation correct-expl">Correct! <code>time.sleep(1)</code> blocks the entire thread — nothing else can run. <code>await asyncio.sleep(1)</code> yields control back to the event loop, so other coroutines (like other simulated devices) can execute during that second.</div>
+    <div class="quiz-explanation wrong-expl">The key difference is blocking vs non-blocking. <code>time.sleep(1)</code> blocks the whole thread. <code>await asyncio.sleep(1)</code> suspends only the current coroutine, freeing the thread for other coroutines.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- NEXT.JS -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="nextjs">
+  <h2><span class="emoji">&#9889;</span> Next.js & React</h2>
+  <p class="subtitle">The real-time dashboard frontend that displays sensor data and alerts.</p>
+  <span class="tag tag-frontend">Frontend</span>
+
+  <h3>What is React?</h3>
+  <p>React is a JavaScript library for building user interfaces from <strong>components</strong> &mdash; reusable, self-contained pieces of UI. A dashboard is naturally component-based: device cards, charts, alert lists, etc.</p>
+
+  <h3>What is Next.js?</h3>
+  <p>Next.js is a <strong>framework built on top of React</strong> that adds routing, server-side rendering, and API routes. Think of React as the engine and Next.js as the car.</p>
+
+  <h3>Dashboard Components</h3>
+  <pre><code>// components/DeviceCard.tsx — one card per sensor
+function DeviceCard({ device }: { device: Device }) {
+  return (
+    &lt;div className={device.status === 'alert' ? 'border-red' : 'border-green'}&gt;
+      &lt;h3&gt;{device.device_id}&lt;/h3&gt;
+      &lt;p&gt;Temp: {device.temperature}&deg;C&lt;/p&gt;
+      &lt;p&gt;Humidity: {device.humidity}%&lt;/p&gt;
+      &lt;p&gt;Soil: {device.soil_moisture}%&lt;/p&gt;
+      &lt;span&gt;Last updated: {timeAgo(device.timestamp)}&lt;/span&gt;
+    &lt;/div&gt;
+  );
+}
+
+// components/DeviceGrid.tsx — shows all devices
+function DeviceGrid() {
+  const { devices } = useDevices();  // custom hook fetching from Dashboard API
+  return (
+    &lt;div className="grid grid-cols-4 gap-4"&gt;
+      {devices.map(d =&gt; &lt;DeviceCard key={d.device_id} device={d} /&gt;)}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+  <h3>Real-Time Updates with WebSocket Hook</h3>
+  <pre><code>// hooks/useWebSocket.ts
+function useWebSocket(url: string) {
+  const [messages, setMessages] = useState&lt;Event[]&gt;([]);
+
+  useEffect(() =&gt; {
+    const ws = new WebSocket(url);
+    ws.onmessage = (event) =&gt; {
+      const data = JSON.parse(event.data);
+      setMessages(prev =&gt; [data, ...prev]);  // newest first
+    };
+    return () =&gt; ws.close();  // cleanup on unmount
+  }, [url]);
+
+  return messages;
+}
+
+// Usage in a page:
+function AlertsPage() {
+  const alerts = useWebSocket('ws://localhost:8081/api/v1/ws/events');
+  return alerts.map(alert =&gt; &lt;AlertToast key={alert.id} alert={alert} /&gt;);
+}</code></pre>
+
+  <h3>Key Frontend Libraries</h3>
+  <table>
+    <tr><th>Library</th><th>Purpose</th></tr>
+    <tr><td><code>recharts</code></td><td>Time-series charts for temperature, humidity, soil moisture</td></tr>
+    <tr><td><code>swr</code></td><td>Data fetching with automatic revalidation ("stale-while-revalidate")</td></tr>
+    <tr><td><code>tailwindcss</code></td><td>Utility-first CSS framework for styling</td></tr>
+    <tr><td><code>vitest</code></td><td>Fast test runner (replaces Jest)</td></tr>
+    <tr><td><code>@testing-library/react</code></td><td>Test components from the user's perspective</td></tr>
+  </table>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- MICROSERVICES -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="microservices">
+  <h2><span class="emoji">&#129518;</span> Microservices Architecture</h2>
+  <p class="subtitle">Breaking a system into small, independently deployable services.</p>
+  <span class="tag tag-pattern">Architecture Pattern</span>
+
+  <h3>Monolith vs. Microservices</h3>
+  <div class="compare">
+    <div class="bad">
+      <div class="label">Monolith</div>
+      <p>One big application doing everything:</p>
+      <pre><code>app/
+├── api.go      (HTTP handlers)
+├── kafka.go    (consumer)
+├── rules.go    (alerting)
+├── db.go       (storage)
+└── main.go     (one binary)</code></pre>
+      <ul>
+        <li>Deploy entire app for any change</li>
+        <li>Scale everything together</li>
+        <li>One bug can crash everything</li>
+      </ul>
+    </div>
+    <div class="good">
+      <div class="label">Microservices (Project Plant)</div>
+      <p>Separate services with clear boundaries:</p>
+      <pre><code>services/
+├── ingestion/   (HTTP → Kafka)
+├── processor/   (Kafka → DB)
+└── dashboard/   (DB → Browser)</code></pre>
+      <ul>
+        <li>Deploy services independently</li>
+        <li>Scale hot services (ingestion: 10x)</li>
+        <li>One service down ≠ all down</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Project Plant's Services</h3>
+  <table>
+    <tr><th>Service</th><th>Language</th><th>Input</th><th>Output</th><th>Scale Factor</th></tr>
+    <tr><td><strong>Ingestion</strong></td><td>Go</td><td>HTTP from sensors</td><td>Kafka events</td><td>High (many sensors)</td></tr>
+    <tr><td><strong>Processor</strong></td><td>Go</td><td>Kafka events</td><td>Postgres + Redis</td><td>Medium</td></tr>
+    <tr><td><strong>Dashboard API</strong></td><td>Go</td><td>Browser requests</td><td>JSON + WebSocket</td><td>Low (few admins)</td></tr>
+    <tr><td><strong>Simulator</strong></td><td>Python</td><td>Profiles config</td><td>HTTP to Ingestion</td><td>Dev only</td></tr>
+    <tr><td><strong>Frontend</strong></td><td>TypeScript</td><td>User interactions</td><td>UI renders</td><td>Client-side</td></tr>
+  </table>
+
+  <div class="callout callout-key">
+    <div class="callout-title">Communication Pattern</div>
+    Services never call each other directly. They communicate through <strong>Kafka</strong> (async events) or <strong>Redis</strong> (pub/sub). This means each service can fail, restart, or scale independently.
+  </div>
+
+  <h3>Verkada Case Study</h3>
+  <p>Verkada's platform has separate services for: camera management, video storage, analytics, alerting, user management, and the Command dashboard. When the analytics service gets a spike in processing, it doesn't affect the video streaming service. Project Plant mirrors this architecture at a smaller scale.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- CQRS -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="cqrs">
+  <h2><span class="emoji">&#128256;</span> CQRS Pattern</h2>
+  <p class="subtitle">Command Query Responsibility Segregation: separate paths for reading and writing data.</p>
+  <span class="tag tag-pattern">Architecture Pattern</span>
+
+  <h3>The Problem</h3>
+  <p>Writing sensor data and reading it for the dashboard have very different requirements:</p>
+  <table>
+    <tr><th></th><th>Writes (Commands)</th><th>Reads (Queries)</th></tr>
+    <tr><td><strong>Volume</strong></td><td>500+ events/sec from 100 sensors</td><td>~10 requests/sec from dashboards</td></tr>
+    <tr><td><strong>Latency tolerance</strong></td><td>Can be async (202 Accepted)</td><td>Must be instant (&lt;100ms)</td></tr>
+    <tr><td><strong>Data shape</strong></td><td>Single event insert</td><td>"Give me all devices + latest readings"</td></tr>
+    <tr><td><strong>Optimization</strong></td><td>Batching, append-only</td><td>Indexed lookups, aggregations</td></tr>
+  </table>
+
+  <h3>The Solution: Two Separate Paths</h3>
+  <div class="diagram"><span class="hl">WRITE PATH (Commands)</span>
+Sensor → Ingestion API → Kafka → Processor → <span class="hl2">Postgres</span> (append)
+                                           → <span class="hl4">Redis SET</span> (update latest)
+
+<span class="hl3">READ PATH (Queries)</span>
+Dashboard → Dashboard API → <span class="hl4">Redis GET</span> (current state, &lt;1ms)
+                          → <span class="hl2">Postgres</span> SELECT (history, indexed)</div>
+
+  <h3>Why Not Just Use One Database?</h3>
+  <p>If the dashboard queried Postgres for "latest reading of all 100 devices" on every page load:</p>
+  <pre><code>-- This query joins and sorts 100 devices × millions of rows:
+SELECT DISTINCT ON (device_id) *
+FROM telemetry_events
+ORDER BY device_id, recorded_at DESC;
+-- Result: ~200ms under load, competes with write queries for connections</code></pre>
+
+  <p>With Redis as the read cache:</p>
+  <pre><code>-- Pre-computed: each device's latest reading is a single key
+MGET device:sensor-001:latest device:sensor-002:latest ... device:sensor-100:latest
+-- Result: ~2ms, doesn't touch Postgres at all</code></pre>
+
+  <div class="callout callout-key">
+    <div class="callout-title">CQRS Trade-off</div>
+    <strong>Pro:</strong> Reads are blazing fast and don't compete with writes. <strong>Con:</strong> There's a brief delay (usually &lt;1 second) between when data is written and when it appears in the read cache. This is called <em>eventual consistency</em>. For a sensor dashboard, this is perfectly acceptable.
+  </div>
+
+  <div class="quiz" data-correct="2">
+    <div class="quiz-question">Q: In CQRS, what does "eventual consistency" mean?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-idx="0">Data is always consistent across all stores</div>
+      <div class="quiz-option" data-idx="1">Data is only written to one store at a time</div>
+      <div class="quiz-option" data-idx="2">There's a brief delay between writing data and it appearing in the read store, but it will catch up</div>
+      <div class="quiz-option" data-idx="3">Data is never consistent and can be lost</div>
+    </div>
+    <div class="quiz-explanation correct-expl">Correct! When the Processor writes to Postgres and Redis, there's a small window where a dashboard read might see slightly stale data. Within milliseconds to seconds, both stores are consistent. This is the trade-off for having incredibly fast reads.</div>
+    <div class="quiz-explanation wrong-expl">Eventual consistency means the read store (Redis) may lag slightly behind the write store (Postgres) — usually by milliseconds. But it will converge. The data is not lost; it's just briefly out of date in one location.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- WEBSOCKETS -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="websockets">
+  <h2><span class="emoji">&#128268;</span> WebSockets & Pub/Sub</h2>
+  <p class="subtitle">Real-time communication from server to browser without polling.</p>
+  <span class="tag tag-pattern">Architecture Pattern</span>
+
+  <h3>The Problem with HTTP Polling</h3>
+  <p>If the dashboard uses regular HTTP to check for new data:</p>
+  <pre><code>// Bad: polling every second
+setInterval(async () => {
+  const data = await fetch('/api/v1/devices');
+  updateUI(data);
+}, 1000);
+// 100 dashboard users × 1 request/sec = 100 req/sec of wasted requests
+// Most responses: "nothing new" (304 Not Modified)</code></pre>
+
+  <h3>WebSockets: Persistent Two-Way Connection</h3>
+  <p>A WebSocket starts as an HTTP request, then <strong>upgrades</strong> to a persistent, bidirectional connection. The server can push data to the client at any time without the client asking.</p>
+  <div class="diagram">HTTP Polling:
+Client: "Any updates?" → Server: "No"  (wasted)
+Client: "Any updates?" → Server: "No"  (wasted)
+Client: "Any updates?" → Server: "Yes! Here's data"
+Client: "Any updates?" → Server: "No"  (wasted)
+
+WebSocket:
+Client ←——————persistent connection——————→ Server
+                                            (server pushes when ready)
+Server: "Here's new data!" → Client
+Server: "Alert! Temp too high!" → Client</div>
+
+  <h3>How It Works in Project Plant</h3>
+  <div class="diagram">1. Browser opens WebSocket to Dashboard API
+   <span class="hl2">ws://localhost:8081/api/v1/ws/events</span>
+
+2. Dashboard API subscribes to Redis Pub/Sub
+   <span class="hl4">SUBSCRIBE alerts:*</span>
+
+3. When Processor publishes an alert:
+   <span class="hl">PUBLISH alerts:sensor-014 {"rule": "high_temperature", ...}</span>
+
+4. Redis delivers to Dashboard API instantly
+
+5. Dashboard API pushes to ALL connected WebSocket clients
+
+6. Browser shows alert toast — no polling needed!</div>
+
+  <h3>The WebSocket Hub Pattern (Go)</h3>
+  <pre><code>// The Hub manages all connected WebSocket clients
+type Hub struct {
+    clients    map[*Client]bool
+    broadcast  chan []byte
+    register   chan *Client
+    unregister chan *Client
+}
+
+func (h *Hub) Run() {
+    for {
+        select {
+        case client := <-h.register:
+            h.clients[client] = true  // new browser connected
+
+        case client := <-h.unregister:
+            delete(h.clients, client)  // browser disconnected
+
+        case message := <-h.broadcast:
+            // Send to ALL connected browsers
+            for client := range h.clients {
+                client.send <- message
+            }
+        }
+    }
+}
+
+// When Redis Pub/Sub receives an alert:
+func (s *Server) onRedisMessage(msg redis.Message) {
+    s.hub.broadcast <- []byte(msg.Payload)  // fans out to all browsers
+}</code></pre>
+
+  <h3>Redis Pub/Sub vs. Kafka</h3>
+  <table>
+    <tr><th></th><th>Kafka</th><th>Redis Pub/Sub</th></tr>
+    <tr><td><strong>Persistence</strong></td><td>Messages stored on disk for days</td><td>Fire-and-forget (no history)</td></tr>
+    <tr><td><strong>Delivery</strong></td><td>At-least-once (can replay)</td><td>At-most-once (miss it, it's gone)</td></tr>
+    <tr><td><strong>Use case</strong></td><td>Durable event pipeline</td><td>Real-time notifications</td></tr>
+    <tr><td><strong>In Project Plant</strong></td><td>Sensor data pipeline</td><td>Alert push to dashboards</td></tr>
+  </table>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Why not use Kafka for WebSocket push?</div>
+    Kafka is designed for durable, replayable event logs — it's overkill for ephemeral UI notifications. Redis Pub/Sub is instant and lightweight. If a browser isn't connected when an alert fires, they'll see it in the alerts list (from Postgres) when they reconnect.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ADAPTER PATTERN -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="adapters">
+  <h2><span class="emoji">&#128268;</span> Adapter Pattern</h2>
+  <p class="subtitle">Making the system work with any sensor hardware without changing backend code.</p>
+  <span class="tag tag-pattern">Design Pattern</span>
+
+  <h3>The Problem</h3>
+  <p>Today we use simulated sensors. Tomorrow we might use a Raspberry Pi with a DHT22 sensor. Next month, an ESP32 with a soil moisture probe. Each has different hardware APIs, but the backend shouldn't need to change for each one.</p>
+
+  <h3>The Solution: SensorAdapter ABC</h3>
+  <p>Define a common interface. Every sensor implements three methods. The SDK handles everything else.</p>
+
+  <div class="diagram"><span class="hl">What you implement</span> (one class per hardware type):
+┌────────────────────────────────────────┐
+│  class YourAdapter(SensorAdapter):     │
+│      async def initialize(self): ...   │  ← set up GPIO, calibrate
+│      async def read(self): ...         │  ← return one reading
+│      async def cleanup(self): ...      │  ← release hardware
+└────────────────────┬───────────────────┘
+                     │
+<span class="hl2">What the SDK handles</span> (you don't touch this):
+┌────────────────────┴───────────────────┐
+│  Device SDK                             │
+│  ├── 1Hz reading loop                   │
+│  ├── JSON serialization                 │
+│  ├── HTTP transport + retries           │
+│  ├── API key authentication             │
+│  ├── Error recovery + reconnection      │
+│  └── Graceful shutdown                  │
+└─────────────────────────────────────────┘</div>
+
+  <h3>Three Adapter Implementations</h3>
+  <pre><code># 1. Simulated (what we use now)
+class SimulatedAdapter(SensorAdapter):
+    async def read(self) -> SensorReading:
+        self.temp += random.uniform(-0.5, 0.5)  # random walk
+        return SensorReading(temperature=self.temp, humidity=..., soil=...)
+
+# 2. Raspberry Pi with DHT22 sensor (future)
+class RPiDHT22Adapter(SensorAdapter):
+    async def read(self) -> SensorReading:
+        sensor = adafruit_dht.DHT22(board.D4)
+        return SensorReading(temperature=sensor.temperature,
+                             humidity=sensor.humidity, soil=self.read_adc())
+
+# 3. ESP32 via Serial (future)
+class ESP32SerialAdapter(SensorAdapter):
+    async def read(self) -> SensorReading:
+        self.serial.write(b"READ\n")
+        line = await self.serial.readline()
+        data = json.loads(line)
+        return SensorReading(**data)</code></pre>
+
+  <div class="callout callout-key">
+    <div class="callout-title">Zero Backend Changes</div>
+    When you add a new hardware adapter, you change <strong>nothing</strong> in the Go ingestion service, the Kafka pipeline, the processor, or the database. The adapter produces the same JSON payload; the rest of the system doesn't know or care whether it came from a simulation or a real sensor.
+  </div>
+
+  <h3>Real-World Analogy</h3>
+  <p>Think of a USB port. Your computer doesn't care if you plug in a keyboard, mouse, or webcam. The USB standard defines the interface; each device implements it differently. The SensorAdapter is our "USB standard" for plant sensors.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- JSON SCHEMA -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="jsonschema">
+  <h2><span class="emoji">&#128220;</span> JSON Schema & Contracts</h2>
+  <p class="subtitle">A single source of truth that keeps Go, Python, and TypeScript in sync.</p>
+  <span class="tag tag-pattern">Architecture Pattern</span>
+
+  <h3>The Problem</h3>
+  <p>When multiple services in different languages exchange data, they need to agree on the format. Without a contract:</p>
+  <ul>
+    <li>Python simulator sends <code>temp</code>, but Go expects <code>temperature</code> &mdash; runtime error</li>
+    <li>Go allows temperature up to 100, Python validates up to 80 &mdash; inconsistent rules</li>
+    <li>Frontend expects <code>soil_moisture</code> as a number, backend sends a string &mdash; chart breaks</li>
+  </ul>
+
+  <h3>The Solution: One JSON Schema File</h3>
+  <pre><code>// schemas/telemetry_event.json — THE source of truth
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TelemetryEvent",
+  "type": "object",
+  "properties": {
+    "device_id":     { "type": "string", "minLength": 1 },
+    "timestamp":     { "type": "string", "format": "date-time" },
+    "temperature":   { "type": "number", "minimum": -40, "maximum": 80 },
+    "humidity":      { "type": "number", "minimum": 0, "maximum": 100 },
+    "soil_moisture": { "type": "number", "minimum": 0, "maximum": 100 }
+  },
+  "required": ["device_id", "timestamp", "temperature", "humidity", "soil_moisture"],
+  "additionalProperties": false
+}</code></pre>
+
+  <h3>Contract Tests: Cross-Language Validation</h3>
+  <p>Both Go and Python tests validate against the <em>same</em> schema file:</p>
+  <div class="compare">
+    <div class="good">
+      <div class="label">Python Contract Test</div>
+      <pre><code>def test_valid_payload(validator):
+    payload = {
+        "device_id": "sensor-001",
+        "timestamp": "2026-...",
+        "temperature": 25.0,
+        "humidity": 60.0,
+        "soil_moisture": 45.0,
+    }
+    validator.validate(payload)
+    # passes ✓</code></pre>
+    </div>
+    <div class="good">
+      <div class="label">Go Contract Test</div>
+      <pre><code>func TestJSONRoundTrip(t *testing.T) {
+    event := TelemetryEvent{
+        DeviceID: "sensor-001",
+        Temperature: 25.0,
+        ...
+    }
+    data, _ := json.Marshal(event)
+    // validate data against same
+    // schemas/telemetry_event.json
+    // passes ✓
+}</code></pre>
+    </div>
+  </div>
+
+  <div class="callout callout-key">
+    <div class="callout-title">Why This Matters</div>
+    If someone changes the schema (e.g., adds a new field), contract tests in <strong>both</strong> languages will catch any mismatch during CI. No more "it works in Python but breaks in Go" surprises.
+  </div>
+
+  <div class="quiz" data-correct="3">
+    <div class="quiz-question">Q: What does <code>"additionalProperties": false</code> do in the JSON Schema?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-idx="0">It makes all properties optional</div>
+      <div class="quiz-option" data-idx="1">It prevents nested objects</div>
+      <div class="quiz-option" data-idx="2">It allows any extra fields to be added</div>
+      <div class="quiz-option" data-idx="3">It rejects payloads that contain fields not defined in the schema</div>
+    </div>
+    <div class="quiz-explanation correct-expl">Correct! With this set to false, a payload like <code>{"device_id": "x", ..., "color": "green"}</code> would be <strong>rejected</strong> because "color" is not in the schema. This enforces a strict contract — no surprise fields sneaking through.</div>
+    <div class="quiz-explanation wrong-expl">This setting rejects any JSON object that contains fields not explicitly listed in the schema's "properties." It enforces strict contracts by preventing unknown fields from passing validation.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- TDD -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="tdd">
+  <h2><span class="emoji">&#129514;</span> Test-Driven Development</h2>
+  <p class="subtitle">Write the test first, watch it fail, then write code to make it pass.</p>
+  <span class="tag tag-testing">Testing</span>
+
+  <h3>The TDD Cycle</h3>
+  <div class="diagram">┌───────────────────────────────────────────────────────┐
+│                    TDD Cycle                          │
+│                                                       │
+│   1. <span class="hl4">RED</span>     → Write a failing test                   │
+│   2. <span class="hl">GREEN</span>   → Write minimal code to pass the test     │
+│   3. <span class="hl2">REFACTOR</span> → Clean up while keeping tests green     │
+│                                                       │
+│   Repeat for every feature, rule, and edge case.      │
+└───────────────────────────────────────────────────────┘</div>
+
+  <h3>Why TDD?</h3>
+  <ul>
+    <li><strong>Confidence:</strong> Every line of code exists because a test demanded it</li>
+    <li><strong>Design:</strong> Writing tests first forces you to think about interfaces before implementation</li>
+    <li><strong>Safety net:</strong> Refactoring is safe because tests catch regressions instantly</li>
+    <li><strong>Documentation:</strong> Tests describe what the code <em>should</em> do</li>
+  </ul>
+
+  <h3>Testing Pyramid in Project Plant</h3>
+  <div class="diagram">                    ╱╲
+                   ╱ <span class="hl4">E2E</span> ╲          Slow, few
+                  ╱ tests  ╲         (full stack)
+                 ╱──────────╲
+                ╱ <span class="hl2">Integration</span> ╲       Medium
+               ╱   tests      ╲      (real Kafka/PG/Redis)
+              ╱────────────────╲
+             ╱   <span class="hl">Unit tests</span>     ╲    Fast, many
+            ╱  (no external deps)  ╲  (mocks/in-memory)
+           ╱────────────────────────╲</div>
+
+  <h3>Testing Tools by Language</h3>
+  <table>
+    <tr><th>Layer</th><th>Go</th><th>Python</th></tr>
+    <tr><td>Unit tests</td><td><code>testing</code> + <code>testify</code></td><td><code>pytest</code></td></tr>
+    <tr><td>Mocking</td><td><code>testify/mock</code> (interfaces)</td><td><code>respx</code>, <code>fakeredis</code></td></tr>
+    <tr><td>Integration</td><td><code>testcontainers-go</code></td><td><code>testcontainers</code></td></tr>
+    <tr><td>Benchmarks</td><td><code>testing.B</code></td><td>N/A</td></tr>
+    <tr><td>Contract</td><td colspan="2"><code>jsonschema</code> (both validate against same file)</td></tr>
+    <tr><td>E2E</td><td colspan="2"><code>pytest</code> + <code>docker-compose.test.yml</code></td></tr>
+  </table>
+
+  <h3>testcontainers: Real Infrastructure in Tests</h3>
+  <p>Instead of mocking Kafka/Postgres/Redis, <code>testcontainers</code> spins up real instances in Docker during the test:</p>
+  <pre><code>// Go integration test — spins up a real Kafka broker
+func TestKafkaProducer(t *testing.T) {
+    ctx := context.Background()
+    // Start a real Kafka container
+    kafkaC, err := kafka.Run(ctx, "confluentinc/cp-kafka:7.9.0")
+    defer kafkaC.Terminate(ctx)
+
+    brokers, _ := kafkaC.Brokers(ctx)
+    producer := NewKafkaProducer(brokers)
+
+    // Test against REAL Kafka, not a mock
+    err = producer.Produce(ctx, validEvent)
+    assert.NoError(t, err)
+
+    // Consume and verify the message arrived
+    consumer := newTestConsumer(brokers)
+    msg := consumer.ReadMessage(ctx)
+    assert.Equal(t, validEvent.DeviceID, msg.DeviceID)
+}</code></pre>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">Mocks vs. Real Infrastructure</div>
+    <strong>Unit tests</strong> use mocks for speed (milliseconds). <strong>Integration tests</strong> use testcontainers for confidence (seconds to start, but tests real behavior). Both are essential &mdash; mocks catch logic bugs fast; integration tests catch infrastructure bugs that mocks miss.
+  </div>
+
+  <h3>Project Plant's Test Count (Step 1)</h3>
+  <table>
+    <tr><th>Category</th><th>Count</th><th>What They Test</th></tr>
+    <tr><td>Go unit (types_test.go)</td><td>13</td><td>JSON serialization, validation, boundary values</td></tr>
+    <tr><td>Python contract</td><td>23</td><td>Schema validation: valid, missing fields, out of range, extra fields</td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>36</strong></td><td>All pass with <code>make test-all</code></td></tr>
+  </table>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- LOAD TESTING -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="loadtest">
+  <h2><span class="emoji">&#128200;</span> Load Testing (k6 + vegeta)</h2>
+  <p class="subtitle">Proving the system handles 500+ events/sec without breaking.</p>
+  <span class="tag tag-testing">Testing</span>
+
+  <h3>Why Load Test?</h3>
+  <p>Your system works with 1 request. Does it work with 500/sec for 30 minutes? Load testing reveals:</p>
+  <ul>
+    <li>Memory leaks (usage grows over time)</li>
+    <li>Connection pool exhaustion (database/Kafka connections run out)</li>
+    <li>Latency degradation (p99 increases under sustained load)</li>
+    <li>Queue backpressure (Kafka consumer can't keep up)</li>
+  </ul>
+
+  <h3>vegeta: Quick Smoke Tests</h3>
+  <p>vegeta is a CLI HTTP load testing tool. Perfect for quick "does it survive?" checks:</p>
+  <pre><code># Fire 500 requests/sec for 30 seconds and see a summary
+echo "POST http://localhost:8080/api/v1/telemetry" | \
+  vegeta attack -rate=500/s -duration=30s | \
+  vegeta report
+
+# Output:
+# Requests  [total]    15000
+# Duration  [total]    30s
+# Latencies [mean]     2.3ms
+# Latencies [p99]      12.1ms    ← must be < 50ms
+# Success   [ratio]    100.00%   ← must be 100%</code></pre>
+
+  <h3>k6: Comprehensive Load Scenarios</h3>
+  <p>k6 runs JavaScript test scripts with powerful features: stages (ramp up/down), thresholds (auto-fail if too slow), and detailed metrics.</p>
+  <pre><code>// tests/load/k6/ingestion_load.js
+import http from 'k6/http';
+import { check } from 'k6';
+
+export const options = {
+  stages: [
+    { duration: '1m', target: 100 },   // ramp up to 100 RPS
+    { duration: '3m', target: 500 },   // ramp up to 500 RPS
+    { duration: '5m', target: 500 },   // sustain 500 RPS for 5 minutes
+    { duration: '1m', target: 0 },     // ramp down
+  ],
+  thresholds: {
+    http_req_duration: ['p(99)<50'],    // p99 must be under 50ms
+    http_req_failed: ['rate<0.001'],    // error rate under 0.1%
+  },
+};
+
+export default function () {
+  const payload = JSON.stringify({
+    device_id: `sensor-${__VU}`,       // unique per virtual user
+    timestamp: new Date().toISOString(),
+    temperature: 20 + Math.random() * 20,
+    humidity: 40 + Math.random() * 40,
+    soil_moisture: 30 + Math.random() * 40,
+  });
+
+  const res = http.post('http://localhost:8080/api/v1/telemetry', payload, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  check(res, {
+    'status is 202': (r) => r.status === 202,
+  });
+}</code></pre>
+
+  <h3>Project Plant Performance Targets</h3>
+  <table>
+    <tr><th>Metric</th><th>Target</th><th>Tool</th></tr>
+    <tr><td>Ingestion throughput</td><td>500+ events/sec</td><td>k6</td></tr>
+    <tr><td>API latency (p99)</td><td>&lt; 50ms</td><td>k6 threshold</td></tr>
+    <tr><td>Error rate</td><td>&lt; 0.1%</td><td>k6 threshold</td></tr>
+    <tr><td>Memory stability (30 min)</td><td>No growth &gt; 20%</td><td>k6 soak test</td></tr>
+    <tr><td>Quick smoke test</td><td>30s at 500 RPS, 100% success</td><td>vegeta</td></tr>
+  </table>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- CI/CD -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="ci">
+  <h2><span class="emoji">&#128736;</span> CI/CD & Observability</h2>
+  <p class="subtitle">Automated testing pipelines and production monitoring.</p>
+  <span class="tag tag-infra">DevOps</span>
+
+  <h3>CI Pipeline (GitHub Actions)</h3>
+  <p>Every push triggers an automated pipeline that runs all tests:</p>
+  <div class="diagram"><span class="hl">CI Pipeline (runs on every push)</span>
+
+┌─────────────┐  ┌─────────────────┐  ┌──────────┐
+│ <span class="hl2">go-unit</span>     │  │ <span class="hl3">python-unit</span>     │  │ <span class="hl4">contract</span> │
+│ (30 sec)    │  │ (20 sec)        │  │ (10 sec) │
+└──────┬──────┘  └───────┬─────────┘  └─────┬────┘
+       │                 │                   │
+       ▼                 ▼                   │
+┌──────────────┐  ┌─────────────────┐        │
+│ <span class="hl2">go-integration</span>│  │ <span class="hl3">python-integration</span>│      │
+│ (3 min)      │  │ (2 min)         │        │
+└──────┬───────┘  └───────┬─────────┘        │
+       │                  │                  │
+       └──────────────────┼──────────────────┘
+                          ▼
+                   ┌─────────────┐
+                   │  <span class="hl">E2E tests</span>  │
+                   │  (8 min)    │
+                   └──────┬──────┘
+                          │ (nightly only)
+                          ▼
+                   ┌─────────────┐
+                   │ <span class="hl4">Load tests</span>  │
+                   │ (10 min)   │
+                   └─────────────┘</div>
+
+  <h3>Structured Logging (uber-go/zap)</h3>
+  <p>Instead of <code>fmt.Println("got request")</code>, we use structured JSON logs that are machine-parseable:</p>
+  <pre><code>// Human log (bad for automation):
+fmt.Println("received telemetry from sensor-014, temp=42.3")
+
+// Structured log (good for automation):
+logger.Info("telemetry received",
+    zap.String("device_id", "sensor-014"),
+    zap.Float64("temperature", 42.3),
+    zap.Duration("latency", 2*time.Millisecond),
+)
+// Output JSON:
+// {"level":"info","msg":"telemetry received","device_id":"sensor-014",
+//  "temperature":42.3,"latency":"2ms","timestamp":"2026-04-09T14:30:00Z"}</code></pre>
+
+  <h3>Prometheus Metrics</h3>
+  <p>Prometheus scrapes a <code>/metrics</code> endpoint from each service, collecting counters, gauges, and histograms:</p>
+  <pre><code>// Expose these metrics from the Ingestion API:
+var (
+    eventsReceived = prometheus.NewCounter(prometheus.CounterOpts{
+        Name: "ingestion_events_received_total",
+    })
+    requestLatency = prometheus.NewHistogram(prometheus.HistogramOpts{
+        Name:    "ingestion_request_duration_seconds",
+        Buckets: []float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.1},
+    })
+)
+
+// In the handler:
+func (h *Handler) handleTelemetry(w http.ResponseWriter, r *http.Request) {
+    start := time.Now()
+    defer func() {
+        requestLatency.Observe(time.Since(start).Seconds())
+    }()
+    eventsReceived.Inc()
+    // ... process request
+}</code></pre>
+
+  <h3>Health Checks</h3>
+  <pre><code>// GET /health — returns dependency status
+{
+  "status": "healthy",
+  "dependencies": {
+    "kafka": "connected",
+    "postgres": "connected",
+    "redis": "connected"
+  },
+  "uptime": "4h23m",
+  "version": "1.0.0"
+}</code></pre>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- FINAL QUIZ -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="quiz">
+  <h2><span class="emoji">&#128221;</span> Final Quiz (30 Questions)</h2>
+  <p class="subtitle">Test your understanding of every technology in Project Plant.</p>
+  <div class="score-display">Score: <strong id="quizScore">0</strong> / <strong id="quizTotal">30</strong></div>
+
+  <div id="quizContainer"></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- FLASHCARDS -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="flashcards">
+  <h2><span class="emoji">&#127183;</span> Flashcards</h2>
+  <p class="subtitle">Click to reveal. Study before the exam.</p>
+
+  <h3>Kafka</h3>
+  <div class="flashcard-deck" id="kafka-flashcards"></div>
+
+  <h3>PostgreSQL</h3>
+  <div class="flashcard-deck" id="postgres-flashcards"></div>
+
+  <h3>Redis</h3>
+  <div class="flashcard-deck" id="redis-flashcards"></div>
+
+  <h3>Go</h3>
+  <div class="flashcard-deck" id="go-flashcards"></div>
+
+  <h3>Architecture Patterns</h3>
+  <div class="flashcard-deck" id="pattern-flashcards"></div>
+
+  <h3>Docker & DevOps</h3>
+  <div class="flashcard-deck" id="docker-flashcards"></div>
+
+  <h3>Testing</h3>
+  <div class="flashcard-deck" id="testing-flashcards"></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- CHEAT SHEET -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="cheatsheet">
+  <h2><span class="emoji">&#128203;</span> Cheat Sheet</h2>
+  <p class="subtitle">Quick reference for all technologies and their roles.</p>
+
+  <h3>Architecture Overview</h3>
+  <pre><code>Sensor → HTTP POST → [Ingestion API] → Kafka → [Processor] → Postgres + Redis
+                                                                     ↓
+                          Browser ← WebSocket ← [Dashboard API] ← Redis Pub/Sub</code></pre>
+
+  <h3>Technology Quick Reference</h3>
+  <table>
+    <tr><th>Tech</th><th>What</th><th>Why in Project Plant</th><th>Key Command</th></tr>
+    <tr><td>Kafka</td><td>Distributed event log</td><td>Buffer between API and DB; zero data loss</td><td><code>kafka-topics --list</code></td></tr>
+    <tr><td>PostgreSQL</td><td>Relational database</td><td>Durable history, SQL queries, indexes</td><td><code>psql -U plant -d plantdb</code></td></tr>
+    <tr><td>Redis</td><td>In-memory key-value store</td><td>Latest readings cache + Pub/Sub alerts</td><td><code>redis-cli GET device:x:latest</code></td></tr>
+    <tr><td>Go</td><td>Compiled language</td><td>Goroutines for concurrency, interfaces for testing</td><td><code>go test ./...</code></td></tr>
+    <tr><td>Python</td><td>Interpreted language</td><td>asyncio for simulators, ABCs for adapters</td><td><code>pytest tests/ -v</code></td></tr>
+    <tr><td>Docker</td><td>Containerization</td><td>Reproducible environments for all services</td><td><code>docker compose up -d</code></td></tr>
+    <tr><td>JSON Schema</td><td>Data contract format</td><td>Single source of truth across Go/Python/TS</td><td><code>jsonschema validate</code></td></tr>
+    <tr><td>k6</td><td>Load testing tool</td><td>Verify 500 RPS with p99 &lt; 50ms</td><td><code>k6 run script.js</code></td></tr>
+    <tr><td>vegeta</td><td>HTTP load tester</td><td>Quick smoke tests from CLI</td><td><code>vegeta attack -rate=500</code></td></tr>
+    <tr><td>testcontainers</td><td>Test infrastructure</td><td>Real Kafka/PG/Redis in integration tests</td><td><code>go test -tags=integration</code></td></tr>
+  </table>
+
+  <h3>Key Patterns</h3>
+  <table>
+    <tr><th>Pattern</th><th>What It Means</th><th>Where Used</th></tr>
+    <tr><td>CQRS</td><td>Separate read/write paths</td><td>Writes → Postgres; Reads → Redis</td></tr>
+    <tr><td>Pub/Sub</td><td>Broadcast messages to all subscribers</td><td>Redis alerts → WebSocket → browsers</td></tr>
+    <tr><td>Adapter</td><td>Common interface for different implementations</td><td>SensorAdapter ABC for hardware</td></tr>
+    <tr><td>Dependency Injection</td><td>Pass dependencies as interfaces</td><td>EventProducer in Go handlers</td></tr>
+    <tr><td>Idempotency</td><td>Same operation twice = same result</td><td>ON CONFLICT DO NOTHING in Postgres</td></tr>
+    <tr><td>Eventual Consistency</td><td>Data syncs across stores with slight delay</td><td>Postgres and Redis may differ by ms</td></tr>
+  </table>
+
+  <h3>Docker Commands</h3>
+  <pre><code># Start infrastructure
+make infra-up        # docker compose up -d --wait
+
+# Stop infrastructure
+make infra-down      # docker compose down -v
+
+# Start test infrastructure (ephemeral)
+make infra-test-up   # uses docker-compose.test.yml
+
+# Run all tests
+make test-all        # Go unit + Python unit + contract tests
+
+# Run integration tests (needs infra)
+make test-go-integration
+make test-python-integration
+
+# Run load tests
+make load-test-quick # vegeta: 500 RPS for 30s
+make load-test-full  # k6: ramp to 500 RPS for 5 min</code></pre>
+
+  <h3>Performance Targets</h3>
+  <table>
+    <tr><th>Metric</th><th>Target</th></tr>
+    <tr><td>Ingestion throughput</td><td>&ge; 500 events/sec</td></tr>
+    <tr><td>API p99 latency</td><td>&lt; 50ms</td></tr>
+    <tr><td>Dashboard read (Redis)</td><td>&lt; 20ms p99</td></tr>
+    <tr><td>WebSocket push latency</td><td>&lt; 2 seconds</td></tr>
+    <tr><td>Soak test memory growth</td><td>&lt; 20% over 30 min</td></tr>
+    <tr><td>Error rate under load</td><td>&lt; 0.1%</td></tr>
+  </table>
+</section>
+
+</main>
+
+<script>
+// ── Navigation ────────────────────────────────────
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('nav a');
+const visited = new Set(['overview']);
+
+function showSection(id) {
+  sections.forEach(s => s.classList.remove('active'));
+  navLinks.forEach(a => a.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelector(`nav a[href="#${id}"]`).classList.add('active');
+  visited.add(id);
+  updateProgress();
+  window.scrollTo(0, 0);
+}
+
+function updateProgress() {
+  const total = sections.length;
+  const pct = Math.round((visited.size / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+// ── Inline Quiz Logic (section-embedded quizzes) ──
+document.querySelectorAll('.quiz').forEach(quiz => {
+  const correct = parseInt(quiz.dataset.correct);
+  const options = quiz.querySelectorAll('.quiz-option');
+  const explanations = quiz.querySelectorAll('.quiz-explanation');
+
+  options.forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (opt.classList.contains('disabled')) return;
+      const idx = parseInt(opt.dataset.idx);
+      options.forEach(o => o.classList.add('disabled'));
+      if (idx === correct) {
+        opt.classList.add('correct');
+        explanations[0].classList.add('show');
+      } else {
+        opt.classList.add('wrong');
+        options[correct].classList.add('correct');
+        explanations[1].classList.add('show');
+      }
+    });
+  });
+});
+
+// ── Final Quiz Data ───────────────────────────────
+const quizData = [
+  { q: "What is Kafka's primary role in Project Plant?", opts: ["Database for sensor data", "Buffer between the API and database that ensures zero data loss", "Frontend framework", "Authentication service"], correct: 1, explain: "Kafka decouples the ingestion API from the database. It buffers events and retains them even if Postgres is down." },
+  { q: "What does KRaft mode mean for Kafka?", opts: ["Kafka runs without any configuration", "Kafka uses its own consensus protocol instead of requiring Zookeeper", "Kafka stores data in PostgreSQL", "Kafka runs in the browser"], correct: 1, explain: "KRaft replaces the external Zookeeper dependency with Kafka's built-in Raft-based consensus. One fewer service to manage." },
+  { q: "What is a Kafka partition?", opts: ["A backup copy of data", "A subdivision of a topic that enables parallel processing", "A type of database table", "A Docker container"], correct: 1, explain: "Partitions allow multiple consumers to read from the same topic in parallel. Messages with the same key go to the same partition." },
+  { q: "What happens to Kafka events if PostgreSQL goes down?", opts: ["Events are lost permanently", "Events are sent to Redis instead", "Events stay in Kafka until PostgreSQL recovers, then are processed", "The ingestion API stops accepting requests"], correct: 2, explain: "Kafka retains events on disk. When Postgres recovers, the consumer resumes from its last committed offset." },
+  { q: "What data type does the telemetry_events table use for the 'reading' column in the alerts table?", opts: ["TEXT", "BLOB", "JSONB", "ARRAY"], correct: 2, explain: "JSONB (binary JSON) allows storing structured data that can be indexed and queried with PostgreSQL's JSON operators." },
+  { q: "Why does the telemetry_events table have an index on (device_id, recorded_at DESC)?", opts: ["To prevent duplicate entries", "To speed up queries filtering by device and time range", "To compress the data", "PostgreSQL requires at least one index"], correct: 1, explain: "This composite index makes 'get readings for device X in time range Y-Z' very fast — a common dashboard query pattern." },
+  { q: "What is the purpose of database migrations?", opts: ["To move data between databases", "To version-control schema changes so every environment has the same structure", "To back up data nightly", "To convert SQL to NoSQL"], correct: 1, explain: "Migrations are numbered SQL scripts applied in order. They ensure dev, test, and production databases have identical schemas." },
+  { q: "What does Redis TTL (Time-To-Live) do?", opts: ["Limits how fast Redis responds", "Automatically deletes a key after a specified duration", "Encrypts the stored value", "Creates a backup of the key"], correct: 1, explain: "TTL causes keys to expire and be deleted after the set time. In Project Plant, this prevents stale sensor readings from appearing current when a device goes offline." },
+  { q: "Redis plays two roles in Project Plant. What are they?", opts: ["Database and web server", "Hot cache for latest readings and Pub/Sub for real-time alerts", "Authentication and logging", "File storage and email"], correct: 1, explain: "Redis SET/GET stores the latest reading per device (cache). Redis PUBLISH/SUBSCRIBE delivers alerts to the dashboard in real-time." },
+  { q: "What is the difference between Redis Pub/Sub and Kafka?", opts: ["They are identical", "Kafka persists messages (replayable); Redis Pub/Sub is fire-and-forget", "Redis is faster than Kafka", "Kafka only works with Go"], correct: 1, explain: "Kafka stores messages on disk and supports replay. Redis Pub/Sub delivers messages to current subscribers only — missed messages are gone." },
+  { q: "What is a Docker container?", opts: ["A virtual machine", "A lightweight, isolated environment running an application with its dependencies", "A type of database", "A programming language"], correct: 1, explain: "Containers share the host OS kernel but have isolated filesystems, processes, and networks. Much lighter than VMs." },
+  { q: "What is a multi-stage Docker build?", opts: ["Building for multiple operating systems", "Using multiple FROM instructions to separate build tools from the final runtime image", "Running multiple containers simultaneously", "Building the same image multiple times"], correct: 1, explain: "The build stage has compilers and tools (~1GB). The final stage copies just the compiled binary into a minimal image (~15MB)." },
+  { q: "Why does docker-compose.test.yml use tmpfs for Postgres?", opts: ["For better security", "So the database is wiped after each test run, ensuring clean test state", "Because tmpfs is required for PostgreSQL", "To save disk space"], correct: 1, explain: "tmpfs stores data in RAM. When the container stops, all data is gone. Tests start with a clean database every time." },
+  { q: "What is a goroutine in Go?", opts: ["A Go package", "A lightweight thread managed by the Go runtime, costing ~2KB of memory", "A database connection", "A type of test"], correct: 1, explain: "Goroutines are Go's concurrency primitive. The HTTP server creates one per incoming request, supporting thousands of simultaneous connections with minimal memory." },
+  { q: "Why does Project Plant use Go interfaces like EventProducer?", opts: ["Go requires all functions to use interfaces", "To enable dependency injection: swap real Kafka for mocks in tests", "To make the code run faster", "Interfaces are required by Kafka"], correct: 1, explain: "Interfaces let the handler work with any implementation. In production: KafkaProducer. In tests: MockProducer. Same handler code, zero infrastructure needed for unit tests." },
+  { q: "What is a table-driven test in Go?", opts: ["A test that uses a database table", "A test pattern where all cases are defined in a slice and looped through", "A test written in HTML", "A test that runs in parallel"], correct: 1, explain: "Define test cases as a slice of structs (name, input, expected), then loop with t.Run(). Adding a new case is one line." },
+  { q: "What does //go:build integration do?", opts: ["Makes the test run faster", "Separates the test so it only runs when explicitly requested with -tags=integration", "Integrates Go with Python", "Enables Docker support"], correct: 1, explain: "Build tags let you separate slow tests (needing real infrastructure) from fast unit tests. 'go test ./...' skips integration tests; 'go test -tags=integration ./...' includes them." },
+  { q: "What does 'await asyncio.sleep(1)' do differently from 'time.sleep(1)' in Python?", opts: ["Nothing, they are the same", "It pauses only the current coroutine, letting others run", "It sleeps for 1 millisecond", "It runs in a separate process"], correct: 1, explain: "await asyncio.sleep yields control to the event loop. Other coroutines (other simulated devices) can run during the pause. time.sleep blocks the entire thread." },
+  { q: "What is a Python Abstract Base Class (ABC)?", opts: ["A base class that cannot be instantiated and defines methods subclasses must implement", "A class that runs faster", "A Python database driver", "A type of test fixture"], correct: 0, explain: "ABCs define interfaces. SensorAdapter is an ABC with abstract methods read(), initialize(), cleanup(). Any sensor hardware must implement all three." },
+  { q: "What is CQRS?", opts: ["A database query language", "Command Query Responsibility Segregation: separate optimized paths for reads and writes", "A type of Redis command", "A CI/CD pipeline stage"], correct: 1, explain: "Writes go through Kafka → Postgres (optimized for append throughput). Reads come from Redis (optimized for instant lookups). Different data stores for different access patterns." },
+  { q: "What is eventual consistency?", opts: ["Data is always consistent", "There's a brief delay between writing data and it appearing in all read stores", "Data is never consistent", "Consistency is not important"], correct: 1, explain: "When the Processor writes to both Postgres and Redis, there's a tiny window where they might differ. Within milliseconds, both converge. Acceptable for a dashboard." },
+  { q: "Why does Project Plant use WebSockets instead of HTTP polling?", opts: ["WebSockets are required for React", "The server can push data instantly without the client repeatedly asking", "WebSockets are faster than HTTP", "HTTP polling doesn't work with Go"], correct: 1, explain: "HTTP polling wastes bandwidth with 'any updates? no. any updates? no.' WebSockets maintain a persistent connection — the server pushes when new data arrives." },
+  { q: "What is the Adapter pattern in Project Plant?", opts: ["Converting HTTP to WebSocket", "A common SensorAdapter interface that any hardware can implement, with the SDK handling transport", "A database migration tool", "A Go testing framework"], correct: 1, explain: "SensorAdapter defines read(), initialize(), cleanup(). Hardware adapters implement only these. The SDK handles HTTP, auth, retries, JSON — so adding new hardware requires one class." },
+  { q: "What does 'additionalProperties: false' do in JSON Schema?", opts: ["Allows any fields", "Rejects payloads with fields not defined in the schema", "Makes all fields optional", "Disables validation"], correct: 1, explain: "This enforces a strict contract. A payload with an unexpected field like 'color' would be rejected. Prevents schema drift across services." },
+  { q: "What is a contract test?", opts: ["A legal document", "A test that validates data formats match across services using a shared schema", "A performance test", "A database migration test"], correct: 1, explain: "Both Go and Python contract tests validate against the same schemas/telemetry_event.json. If someone changes the schema, mismatches are caught in CI." },
+  { q: "What is the TDD cycle?", opts: ["Test, Deploy, Debug", "Red (failing test), Green (make it pass), Refactor (clean up)", "Think, Design, Develop", "Test, Document, Deliver"], correct: 1, explain: "Write a test that fails (red), write minimum code to pass (green), then clean up (refactor). Every feature starts with a test." },
+  { q: "What does testcontainers do?", opts: ["Tests Docker container images for vulnerabilities", "Spins up real infrastructure (Kafka, Postgres, Redis) in Docker for integration tests", "Replaces Docker Compose", "Creates test data"], correct: 1, explain: "testcontainers starts real database/broker containers during test execution. Tests run against real infrastructure, not mocks, catching bugs that mocks would miss." },
+  { q: "What does k6 measure that vegeta doesn't?", opts: ["HTTP status codes", "Complex multi-stage load scenarios with thresholds and soak tests", "Request/response bodies", "DNS resolution"], correct: 1, explain: "vegeta is a simple rate-based tool. k6 supports ramp-up/down stages, threshold assertions (auto-fail if p99 > 50ms), and long soak tests for memory leak detection." },
+  { q: "What is structured logging?", opts: ["Logging to a file instead of console", "JSON-formatted log entries with key-value fields that machines can parse", "Logging only errors", "Using print statements"], correct: 1, explain: "Instead of 'got request from sensor-014', structured logs produce {'device_id':'sensor-014','latency':'2ms',...}. This enables automated log analysis, filtering, and alerting." },
+  { q: "What is the purpose of the /health endpoint?", opts: ["To serve the frontend", "To report service health and dependency status (Kafka, Postgres, Redis connectivity)", "To authenticate users", "To reset the database"], correct: 1, explain: "Health endpoints let monitoring tools (Docker health checks, Kubernetes probes, Prometheus) verify that the service is running and its dependencies are reachable." },
+];
+
+// ── Render Final Quiz ─────────────────────────────
+let quizScore = 0;
+const quizContainer = document.getElementById('quizContainer');
+
+quizData.forEach((q, i) => {
+  const div = document.createElement('div');
+  div.className = 'quiz';
+  div.innerHTML = `
+    <div class="quiz-question">${i + 1}. ${q.q}</div>
+    <div class="quiz-options">
+      ${q.opts.map((o, j) => `<div class="quiz-option" data-idx="${j}">${o}</div>`).join('')}
+    </div>
+    <div class="quiz-explanation correct-expl">${q.explain}</div>
+    <div class="quiz-explanation wrong-expl">${q.explain}</div>
+  `;
+  quizContainer.appendChild(div);
+
+  const options = div.querySelectorAll('.quiz-option');
+  const explanations = div.querySelectorAll('.quiz-explanation');
+
+  options.forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (opt.classList.contains('disabled')) return;
+      const idx = parseInt(opt.dataset.idx);
+      options.forEach(o => o.classList.add('disabled'));
+      if (idx === q.correct) {
+        opt.classList.add('correct');
+        explanations[0].classList.add('show');
+        quizScore++;
+      } else {
+        opt.classList.add('wrong');
+        options[q.correct].classList.add('correct');
+        explanations[1].classList.add('show');
+      }
+      document.getElementById('quizScore').textContent = quizScore;
+    });
+  });
+});
+
+// ── Flashcard Data ────────────────────────────────
+const flashcardData = {
+  'kafka-flashcards': [
+    ["What is a Kafka topic?", "A named category (like a table name) to which messages are written. Project Plant uses 'telemetry.events'."],
+    ["What is a Kafka offset?", "A sequential number (0, 1, 2, ...) assigned to each message in a partition. Consumers track offsets to know what they've read."],
+    ["What is a consumer group?", "Multiple consumers sharing the same group ID divide partitions among themselves. Each message is processed by exactly one consumer in the group."],
+    ["Why use message keys in Kafka?", "Messages with the same key (e.g., device_id) are routed to the same partition, guaranteeing order per key."],
+    ["What happens if a Kafka consumer crashes?", "It restarts from its last committed offset. Unprocessed messages are not lost — they remain in the topic."],
+    ["What is KRaft?", "Kafka's built-in consensus protocol that replaces Zookeeper. Fewer moving parts, same functionality."],
+  ],
+  'postgres-flashcards': [
+    ["What is a database index?", "A data structure (usually B-tree) that speeds up lookups. Like the index in a textbook — find rows without scanning the whole table."],
+    ["What is ON CONFLICT DO NOTHING?", "An idempotency mechanism: if inserting a row that would violate a unique constraint, skip it silently instead of erroring."],
+    ["What is a database migration?", "A numbered SQL script that modifies the schema. Applied in order to ensure all environments match."],
+    ["What is TIMESTAMPTZ?", "PostgreSQL's timestamp type that stores timezone information. Always use this instead of TIMESTAMP for correct time handling."],
+    ["What is pgx?", "A Go PostgreSQL driver with connection pooling. Manages a pool of connections so you don't open/close one per query."],
+    ["What is JSONB?", "PostgreSQL's binary JSON type. Stores structured data that can be indexed and queried with JSON operators."],
+  ],
+  'redis-flashcards': [
+    ["How fast is Redis?", "Microsecond-level reads. Data lives in RAM, so no disk I/O for lookups."],
+    ["What is Redis TTL?", "Time-To-Live: a key automatically expires and is deleted after the set duration. Used to detect offline devices."],
+    ["What is Redis Pub/Sub?", "A message broadcasting system. PUBLISH sends to a channel; all subscribers receive it instantly. Fire-and-forget (no history)."],
+    ["When to use Redis vs. Postgres?", "Redis for current state (latest reading, real-time alerts). Postgres for historical data (queries over time ranges)."],
+    ["What does MGET do?", "Gets multiple keys in one call. Dashboard uses it to fetch latest readings for all devices at once."],
+  ],
+  'go-flashcards': [
+    ["What is a goroutine?", "A lightweight thread managed by Go's runtime. Costs ~2KB memory. The HTTP server creates one per request."],
+    ["What is a Go interface?", "A set of method signatures. Any type that implements those methods satisfies the interface — no 'implements' keyword needed."],
+    ["What is dependency injection in Go?", "Passing interfaces (not concrete types) to constructors. Enables swapping real implementations for mocks in tests."],
+    ["What is a build tag?", "A comment like //go:build integration that conditionally includes/excludes files from compilation. Separates unit from integration tests."],
+    ["What does go mod tidy do?", "Removes unused dependencies from go.mod and go.sum, and adds any missing ones."],
+  ],
+  'pattern-flashcards': [
+    ["What is CQRS?", "Command Query Responsibility Segregation: separate optimized paths for writes (Kafka → Postgres) and reads (Redis)."],
+    ["What is eventual consistency?", "After a write, there's a brief delay before all read stores are updated. Data converges within milliseconds."],
+    ["What is the Adapter pattern?", "A common interface (SensorAdapter) that different implementations (Simulated, RPi, ESP32) satisfy. Decouples hardware from the platform."],
+    ["What is microservices architecture?", "Breaking a system into small, independently deployable services that communicate via messages (Kafka) or APIs."],
+    ["What is idempotency?", "An operation that produces the same result whether executed once or multiple times. Essential for retry safety."],
+  ],
+  'docker-flashcards': [
+    ["What is a Docker image vs. container?", "Image = read-only template (recipe). Container = running instance of an image (the actual meal)."],
+    ["What is docker compose?", "A tool for defining and running multi-container applications. One YAML file describes all services."],
+    ["What is a health check?", "A command Docker runs periodically to verify a container is actually ready, not just running."],
+    ["What is tmpfs in Docker?", "A filesystem stored in RAM. Data is lost when the container stops. Used for ephemeral test databases."],
+    ["What is a named volume?", "Persistent storage managed by Docker. Data survives container restarts. Used for development databases."],
+  ],
+  'testing-flashcards': [
+    ["What is TDD?", "Test-Driven Development: write a failing test first, then write code to make it pass, then refactor."],
+    ["What is a contract test?", "A test that validates data formats match across services. Both Go and Python validate against the same JSON Schema."],
+    ["What is testcontainers?", "A library that spins up real Docker containers (Kafka, Postgres, Redis) during tests. Tests real behavior, not mocks."],
+    ["What is k6?", "A load testing tool that runs JavaScript scripts with stages (ramp up/down), thresholds (auto-fail), and detailed metrics."],
+    ["What is the testing pyramid?", "Many fast unit tests (base), fewer integration tests (middle), fewest E2E tests (top). Speed decreases upward, confidence increases."],
+    ["What is vegeta?", "A CLI HTTP load tester. Quick smoke tests: send N requests/sec for a duration, report latency and success rate."],
+  ],
+};
+
+// ── Render Flashcards ─────────────────────────────
+Object.entries(flashcardData).forEach(([containerId, cards]) => {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  cards.forEach(([q, a]) => {
+    const card = document.createElement('div');
+    card.className = 'flashcard';
+    card.innerHTML = `<div class="flashcard-q">${q}</div><div class="flashcard-a">${a}</div>`;
+    card.addEventListener('click', () => card.classList.toggle('open'));
+    container.appendChild(card);
+  });
+});
+
+// ── Initial State ─────────────────────────────────
+updateProgress();
+</script>
+
+</body>
+</html>
