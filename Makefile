@@ -7,20 +7,24 @@ test-go-unit:
 	cd pkg && go test ./...
 	cd services/ingestion && go test ./internal/... 2>/dev/null || true
 	cd services/processor && go test ./internal/... 2>/dev/null || true
+	cd services/dashboard && go test ./internal/... 2>/dev/null || true
 
 test-go-integration:
 	cd services/ingestion && go test -tags=integration ./integration_test/...
 	cd services/processor && go test -tags=integration ./integration_test/...
+	cd services/dashboard && go test -tags=integration ./integration_test/... 2>/dev/null || true
 
 test-go-bench:
 	cd pkg && go test -bench=. -benchtime=3s ./...
 	cd services/ingestion && go test -bench=. -benchtime=3s ./internal/...
 	cd services/processor && go test -bench=. -benchtime=3s ./internal/...
+	cd services/dashboard && go test -bench=. -benchtime=3s ./internal/...
 
 lint-go:
 	cd pkg && golangci-lint run
 	cd services/ingestion && golangci-lint run
 	cd services/processor && golangci-lint run
+	cd services/dashboard && golangci-lint run
 
 # ── Python ──────────────────────────────────────────
 
