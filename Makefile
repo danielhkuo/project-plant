@@ -1,5 +1,6 @@
 .PHONY: test-all test-go-unit test-go-integration test-python-unit test-python-integration \
-       test-contract test-e2e lint-go lint-python load-test-quick load-test-full load-test-soak
+       test-contract test-e2e test-frontend lint-go lint-python lint-frontend \
+       dev-frontend demo-frontend build-frontend load-test-quick load-test-full load-test-soak
 
 # ── Go ──────────────────────────────────────────────
 
@@ -43,9 +44,26 @@ test-e2e:
 lint-python:
 	cd simulators && ruff check . && mypy src/
 
+# ── Frontend ────────────────────────────────────────
+
+test-frontend:
+	cd frontend && npm test
+
+lint-frontend:
+	cd frontend && npm run lint
+
+dev-frontend:
+	cd frontend && npm run dev
+
+demo-frontend:
+	cd frontend && NEXT_PUBLIC_DEMO_MODE=true npm run dev
+
+build-frontend:
+	cd frontend && npm run build
+
 # ── Combined ────────────────────────────────────────
 
-test-all: test-go-unit test-python-unit test-contract
+test-all: test-go-unit test-python-unit test-contract test-frontend
 
 test-all-integration: test-all test-go-integration test-python-integration
 

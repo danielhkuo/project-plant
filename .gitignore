@@ -46,3 +46,10 @@ htmlcov/
 
 # Docker
 docker-compose.override.yml
+
+# Frontend (Node.js / Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/next-env.d.ts
+frontend/tsconfig.tsbuildinfo
