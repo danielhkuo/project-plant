@@ -22,7 +22,7 @@ Each step follows test-driven development: **write tests first**, then implement
 
 **Phase 4 — Dashboard**
 - [x] **Step 10:** Dashboard API — REST + WebSocket (Go)
-- [ ] **Step 11:** Frontend Dashboard (Next.js)
+- [x] **Step 11:** Frontend Dashboard (Next.js)
 
 **Phase 5 — Integration & Validation**
 - [ ] **Step 12:** Ingestion Integration Tests (HTTP → Kafka)
