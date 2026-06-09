@@ -28,7 +28,7 @@ Each step follows test-driven development: **write tests first**, then implement
 - [x] **Step 12:** Ingestion Integration Tests (HTTP → Kafka)
 - [x] **Step 13:** Processor Integration Tests (Kafka → Store + Alerts)
 - [x] **Step 14:** Simulator Transport + E2E Wiring (Python)
-- [ ] **Step 15:** Full System E2E Tests
+- [x] **Step 15:** Full System E2E Tests
 - [ ] **Step 16:** Load Testing + Performance Validation
 
 **Phase 6 — Production Readiness**
@@ -753,7 +753,7 @@ Integration (`simulators/tests/integration/test_e2e_ingestion.py`, requires full
 
 ---
 
-## Step 15: Full System E2E Tests
+## Step 15: Full System E2E Tests ✅
 
 **Goal:** Validate the entire system works as a whole under realistic conditions, including failure scenarios. These are the final acceptance tests.
 
