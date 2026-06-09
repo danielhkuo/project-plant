@@ -1,7 +1,10 @@
 package api
 
 import (
+	"bufio"
 	"context"
+	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -35,6 +38,23 @@ type statusRecorder struct {
 func (r *statusRecorder) WriteHeader(code int) {
 	r.status = code
 	r.ResponseWriter.WriteHeader(code)
+}
+
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (r *statusRecorder) Unwrap() http.ResponseWriter {
+	return r.ResponseWriter
+}
+
+// Hijack delegates to the underlying ResponseWriter so the WebSocket handler can
+// take over the connection. Without this, wrapping the writer for status logging
+// breaks the /api/v1/ws/events upgrade — the ws library asserts http.Hijacker
+// directly on the writer and otherwise rejects the handshake with 501.
+func (r *statusRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hj, ok := r.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("underlying ResponseWriter does not support hijacking")
+	}
+	return hj.Hijack()
 }
 
 // Logger middleware logs request completion with method, path, status, and duration.

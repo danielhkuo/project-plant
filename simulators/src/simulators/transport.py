@@ -39,6 +39,7 @@ class HTTPTransport:
         retries: int = 3,
         batch_size: int = 1,
         backoff_base: float = 0.1,
+        max_connections: int = 256,
         client: httpx.AsyncClient | None = None,
     ) -> None:
         self._base_url = base_url.rstrip("/")
@@ -47,7 +48,16 @@ class HTTPTransport:
         self._retries = retries
         self.batch_size = batch_size
         self._backoff_base = backoff_base
-        self._client = client or httpx.AsyncClient(timeout=timeout)
+        # One transport is shared by an entire fleet, so the connection pool must
+        # be large enough for all devices' synchronized 1Hz bursts — the httpx
+        # default (100) otherwise serializes a big fleet and inflates tail latency.
+        self._client = client or httpx.AsyncClient(
+            timeout=timeout,
+            limits=httpx.Limits(
+                max_connections=max_connections,
+                max_keepalive_connections=max_connections,
+            ),
+        )
         self._owns_client = client is None
 
     @property
