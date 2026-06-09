@@ -25,9 +25,9 @@ Each step follows test-driven development: **write tests first**, then implement
 - [x] **Step 11:** Frontend Dashboard (Next.js)
 
 **Phase 5 — Integration & Validation**
-- [ ] **Step 12:** Ingestion Integration Tests (HTTP → Kafka)
-- [ ] **Step 13:** Processor Integration Tests (Kafka → Store + Alerts)
-- [ ] **Step 14:** Simulator Transport + E2E Wiring (Python)
+- [x] **Step 12:** Ingestion Integration Tests (HTTP → Kafka)
+- [x] **Step 13:** Processor Integration Tests (Kafka → Store + Alerts)
+- [x] **Step 14:** Simulator Transport + E2E Wiring (Python)
 - [ ] **Step 15:** Full System E2E Tests
 - [ ] **Step 16:** Load Testing + Performance Validation
 
@@ -644,7 +644,7 @@ frontend/
 
 ---
 
-## Step 12: Ingestion Integration Tests (HTTP → Kafka)
+## Step 12: Ingestion Integration Tests (HTTP → Kafka) ✅
 
 **Goal:** Prove the full ingestion path works end-to-end with real Kafka. These are the first tests that cross service boundaries.
 
@@ -673,7 +673,7 @@ frontend/
 
 ---
 
-## Step 13: Processor Integration Tests (Kafka → Store + Alerts)
+## Step 13: Processor Integration Tests (Kafka → Store + Alerts) ✅
 
 **Goal:** Prove the processing pipeline is reliable — especially under failure conditions. This validates the Kafka buffering guarantee.
 
@@ -711,7 +711,7 @@ frontend/
 
 ---
 
-## Step 14: Simulator Transport + E2E Wiring (Python)
+## Step 14: Simulator Transport + E2E Wiring (Python) ✅
 
 **Goal:** Connect the simulator fleet to the real ingestion API. Complete the data path from simulated device → HTTP → Kafka → Processor → Postgres/Redis.
 

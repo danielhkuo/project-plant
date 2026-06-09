@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -25,30 +24,27 @@ func main() {
 	producer := kafka.NewKafkaProducer(cfg.Kafka)
 	defer producer.Close()
 
-	router := api.NewRouter(producer, logger)
-
-	// Wrap with auth middleware
-	authedRouter := auth.Middleware(cfg.Auth)(router)
+	// Auth protects the /api/v1/* routes only; /health stays public.
+	router := api.NewRouter(producer, auth.Middleware(cfg.Auth), logger)
 
 	srv := &http.Server{
 		Addr:         cfg.Addr,
-		Handler:      authedRouter,
+		Handler:      router,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// Graceful shutdown
+	// Cancel on SIGTERM/SIGINT, then drain in-flight requests via Shutdown.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
+
 	go func() {
-		sigCh := make(chan os.Signal, 1)
-		signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
-		<-sigCh
-
+		<-ctx.Done()
 		logger.Info("shutting down server")
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-
-		srv.Shutdown(ctx)
+		srv.Shutdown(shutdownCtx)
 	}()
 
 	logger.Info("starting ingestion server", zap.String("addr", cfg.Addr))

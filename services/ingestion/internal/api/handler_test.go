@@ -22,6 +22,7 @@ type mockProducer struct {
 	publishCalled int
 	lastEvent     telemetry.TelemetryEvent
 	err           error
+	healthErr     error
 }
 
 func (m *mockProducer) Publish(_ context.Context, event telemetry.TelemetryEvent) error {
@@ -30,7 +31,13 @@ func (m *mockProducer) Publish(_ context.Context, event telemetry.TelemetryEvent
 	return m.err
 }
 
+func (m *mockProducer) Healthy(_ context.Context) error { return m.healthErr }
+
 func (m *mockProducer) Close() error { return nil }
+
+// noAuth is a pass-through middleware used in router unit tests that don't
+// exercise authentication.
+func noAuth(next http.Handler) http.Handler { return next }
 
 func validJSON() []byte {
 	return []byte(`{"device_id":"dev-001","timestamp":"2026-04-09T12:00:00Z","temperature":23.5,"humidity":62.3,"soil_moisture":45.1}`)
@@ -73,7 +80,7 @@ func TestIngestHandler_InvalidPayload(t *testing.T) {
 func TestIngestHandler_MethodNotAllowed(t *testing.T) {
 	producer := &mockProducer{}
 	logger := zap.NewNop()
-	router := api.NewRouter(producer, logger)
+	router := api.NewRouter(producer, noAuth, logger)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/telemetry", nil)
 	rec := httptest.NewRecorder()
@@ -113,7 +120,7 @@ func TestIngestHandler_ProducerError(t *testing.T) {
 func TestIngestHandler_ContentType(t *testing.T) {
 	producer := &mockProducer{}
 	logger := zap.NewNop()
-	router := api.NewRouter(producer, logger)
+	router := api.NewRouter(producer, noAuth, logger)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry", bytes.NewReader(validJSON()))
 	req.Header.Set("Content-Type", "text/plain")

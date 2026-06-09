@@ -1,6 +1,7 @@
 .PHONY: test-all test-go-unit test-go-integration test-python-unit test-python-integration \
        test-contract test-e2e test-frontend lint-go lint-python lint-frontend \
-       dev-frontend demo-frontend build-frontend load-test-quick load-test-full load-test-soak
+       dev-frontend demo-frontend build-frontend load-test-quick load-test-full load-test-soak \
+       migrate run-ingestion run-processor run-dashboard run-simulators
 
 # ── Go ──────────────────────────────────────────────
 
@@ -93,3 +94,32 @@ infra-test-up:
 
 infra-test-down:
 	docker compose -f docker-compose.test.yml down -v
+
+# Apply database migrations to the docker-compose Postgres (run after infra-up).
+migrate:
+	@for f in migrations/*.up.sql; do \
+		echo "applying $$f"; \
+		docker compose exec -T postgres psql -U plant -d plantdb -v ON_ERROR_STOP=1 -f - < $$f || exit 1; \
+	done
+
+# ── Run services (against infra-up + migrate) ───────
+# Each runs in the foreground; start them in separate shells or with trailing &.
+
+run-ingestion:
+	cd services/ingestion && go run ./cmd/server
+
+run-processor:
+	cd services/processor && go run ./cmd/processor
+
+run-dashboard:
+	cd services/dashboard && go run ./cmd/dashboard
+
+# Run a device fleet against the ingestion API.
+# Override with: make run-simulators COUNT=10 PROFILE=tropical DURATION=10
+COUNT ?= 10
+PROFILE ?= tropical
+DURATION ?= 10
+run-simulators:
+	cd simulators && .venv/bin/python -m simulators \
+		--count $(COUNT) --profile $(PROFILE) --duration $(DURATION) \
+		--api-url http://localhost:8080 --api-key dev-key-001
