@@ -1,7 +1,7 @@
 .PHONY: test-all test-go-unit test-go-integration test-python-unit test-python-integration \
        test-contract test-e2e test-frontend lint-go lint-python lint-frontend \
        dev-frontend demo-frontend build-frontend load-test-quick load-test-full load-test-soak \
-       migrate run-ingestion run-processor run-dashboard run-simulators
+       load-test-dashboard migrate run-ingestion run-processor run-dashboard run-simulators
 
 # ── Go ──────────────────────────────────────────────
 
@@ -73,13 +73,16 @@ test-full: test-all-integration test-e2e
 # ── Load Testing ────────────────────────────────────
 
 load-test-quick:
-	cd tests/load && echo "POST http://localhost:8080/api/v1/telemetry" | vegeta attack -rate=500/s -duration=30s | vegeta report
+	cd tests/load && vegeta attack -targets=vegeta/ingestion.vegeta -rate=500/s -duration=30s | vegeta report
 
 load-test-full:
 	cd tests/load && k6 run k6/ingestion_load.js
 
 load-test-soak:
 	cd tests/load && k6 run k6/sustained_throughput.js
+
+load-test-dashboard:
+	cd tests/load && k6 run k6/dashboard_read.js
 
 # ── Docker ──────────────────────────────────────────
 

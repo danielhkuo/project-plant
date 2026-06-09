@@ -1,0 +1,4 @@
+POST http://localhost:8080/api/v1/telemetry
+X-API-Key: dev-key-001
+Content-Type: application/json
+@vegeta/payload.json
