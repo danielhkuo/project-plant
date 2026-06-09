@@ -13,7 +13,9 @@ import (
 
 // KafkaProducer implements the api.EventProducer interface using Kafka.
 type KafkaProducer struct {
-	writer *kafkago.Writer
+	writer  *kafkago.Writer
+	brokers []string
+	topic   string
 }
 
 // NewKafkaProducer creates a producer with the given configuration.
@@ -29,7 +31,24 @@ func NewKafkaProducer(cfg ProducerConfig) *KafkaProducer {
 		Async:        false, // synchronous for reliable delivery
 	}
 
-	return &KafkaProducer{writer: w}
+	return &KafkaProducer{writer: w, brokers: cfg.Brokers, topic: cfg.Topic}
+}
+
+// Healthy reports whether Kafka is reachable by dialing a broker and reading
+// metadata for the configured topic. Used by the /health endpoint.
+func (p *KafkaProducer) Healthy(ctx context.Context) error {
+	if len(p.brokers) == 0 {
+		return fmt.Errorf("no kafka brokers configured")
+	}
+	conn, err := kafkago.DialContext(ctx, "tcp", p.brokers[0])
+	if err != nil {
+		return fmt.Errorf("dial kafka: %w", err)
+	}
+	defer conn.Close()
+	if _, err := conn.ReadPartitions(p.topic); err != nil {
+		return fmt.Errorf("read kafka metadata: %w", err)
+	}
+	return nil
 }
 
 // Publish serializes the event to JSON and writes it to Kafka.
