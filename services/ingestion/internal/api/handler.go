@@ -7,19 +7,23 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/danielkuo/project-plant/services/ingestion/internal/metrics"
 	"github.com/danielkuo/project-plant/services/ingestion/internal/validation"
 )
 
 // IngestHandler handles POST /api/v1/telemetry requests.
 type IngestHandler struct {
 	producer EventProducer
+	metrics  *metrics.Metrics
 	logger   *zap.Logger
 }
 
 // NewIngestHandler creates a new handler with the given producer and logger.
-func NewIngestHandler(producer EventProducer, logger *zap.Logger) *IngestHandler {
+// m may be nil, which disables metric collection (used by handler-only tests).
+func NewIngestHandler(producer EventProducer, m *metrics.Metrics, logger *zap.Logger) *IngestHandler {
 	return &IngestHandler{
 		producer: producer,
+		metrics:  m,
 		logger:   logger,
 	}
 }
@@ -27,17 +31,20 @@ func NewIngestHandler(producer EventProducer, logger *zap.Logger) *IngestHandler
 func (h *IngestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		h.metrics.EventsIngested(metrics.StatusRejected, 1)
 		writeError(w, http.StatusBadRequest, "failed to read request body", "")
 		return
 	}
 
 	if len(body) == 0 {
+		h.metrics.EventsIngested(metrics.StatusRejected, 1)
 		writeError(w, http.StatusBadRequest, "request body must not be empty", "body")
 		return
 	}
 
 	event, err := validation.Validate(body)
 	if err != nil {
+		h.metrics.EventsIngested(metrics.StatusRejected, 1)
 		if valErr, ok := err.(*validation.ValidationError); ok {
 			writeError(w, http.StatusBadRequest, valErr.Message, valErr.Field)
 		} else {
@@ -47,11 +54,13 @@ func (h *IngestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.producer.Publish(r.Context(), event); err != nil {
+		h.metrics.EventsIngested(metrics.StatusError, 1)
 		h.logger.Error("failed to publish event", zap.Error(err))
 		writeError(w, http.StatusServiceUnavailable, "failed to publish event", "")
 		return
 	}
 
+	h.metrics.EventsIngested(metrics.StatusAccepted, 1)
 	w.WriteHeader(http.StatusAccepted)
 }
 

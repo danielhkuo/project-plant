@@ -18,3 +18,13 @@ type EventStore interface {
 type AlertPublisher interface {
 	Publish(ctx context.Context, alert engine.Alert) error
 }
+
+// Metrics observes processing outcomes. It keeps the metrics backend
+// (Prometheus) out of the processing logic; implementations must be safe for
+// concurrent use.
+type Metrics interface {
+	// EventProcessed records one message outcome: "success" or "error".
+	EventProcessed(result string)
+	// AlertFired records one triggered alert by rule name and severity.
+	AlertFired(rule, severity string)
+}

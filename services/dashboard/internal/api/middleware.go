@@ -57,18 +57,23 @@ func (r *statusRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return hj.Hijack()
 }
 
-// Logger middleware logs request completion with method, path, status, and duration.
+// Logger middleware logs request completion with method, path, status,
+// duration_ms, and the request id set by the RequestID middleware (which must
+// wrap this one so the id is already in context).
 func Logger(logger *zap.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 			rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 			next.ServeHTTP(rec, r)
+
+			requestID, _ := r.Context().Value(requestIDKey).(string)
 			logger.Info("request completed",
 				zap.String("method", r.Method),
 				zap.String("path", r.URL.Path),
 				zap.Int("status", rec.status),
-				zap.Duration("duration", time.Since(start)),
+				zap.Float64("duration_ms", float64(time.Since(start).Microseconds())/1000.0),
+				zap.String("request_id", requestID),
 			)
 		})
 	}

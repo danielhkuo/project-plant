@@ -14,11 +14,18 @@ import (
 
 const maxRetries = 3
 
+// Result label values reported to Metrics.EventProcessed.
+const (
+	ResultSuccess = "success"
+	ResultError   = "error"
+)
+
 // Consumer processes telemetry messages from Kafka.
 type Consumer struct {
 	engine   *engine.RuleEngine
 	store    EventStore
 	alertPub AlertPublisher
+	metrics  Metrics
 	logger   *zap.Logger
 }
 
@@ -32,6 +39,14 @@ func NewConsumer(eng *engine.RuleEngine, store EventStore, alertPub AlertPublish
 	}
 }
 
+// WithMetrics attaches an observer for processing outcomes. Metrics are
+// optional; without this call the consumer records nothing. Attach before the
+// read loop starts — the field is not synchronized with Process.
+func (c *Consumer) WithMetrics(m Metrics) *Consumer {
+	c.metrics = m
+	return c
+}
+
 // Process handles a single raw message from Kafka.
 // Returns nil if the message was processed (or skipped if malformed).
 // Returns an error only if a retryable store/publish failure persists.
@@ -39,6 +54,7 @@ func (c *Consumer) Process(ctx context.Context, msg []byte) error {
 	var event telemetry.TelemetryEvent
 	if err := json.Unmarshal(msg, &event); err != nil {
 		c.logger.Error("skipping malformed message", zap.Error(err))
+		c.eventProcessed(ResultError)
 		return nil // skip malformed, don't retry
 	}
 
@@ -46,6 +62,7 @@ func (c *Consumer) Process(ctx context.Context, msg []byte) error {
 	if err := c.withRetry(ctx, "store.Write", func() error {
 		return c.store.Write(ctx, event)
 	}); err != nil {
+		c.eventProcessed(ResultError)
 		return fmt.Errorf("store.Write failed after retries: %w", err)
 	}
 
@@ -65,9 +82,20 @@ func (c *Consumer) Process(ctx context.Context, msg []byte) error {
 		if err := c.alertPub.Publish(ctx, alert); err != nil {
 			c.logger.Error("alert publish failed", zap.Error(err), zap.String("alert_id", alert.AlertID))
 		}
+
+		if c.metrics != nil {
+			c.metrics.AlertFired(alert.RuleName, alert.Severity)
+		}
 	}
 
+	c.eventProcessed(ResultSuccess)
 	return nil
+}
+
+func (c *Consumer) eventProcessed(result string) {
+	if c.metrics != nil {
+		c.metrics.EventProcessed(result)
+	}
 }
 
 func (c *Consumer) withRetry(ctx context.Context, name string, fn func() error) error {

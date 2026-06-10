@@ -45,7 +45,7 @@ func validJSON() []byte {
 
 func TestIngestHandler_ValidPayload(t *testing.T) {
 	producer := &mockProducer{}
-	handler := api.NewIngestHandler(producer, zap.NewNop())
+	handler := api.NewIngestHandler(producer, nil, zap.NewNop())
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry", bytes.NewReader(validJSON()))
 	req.Header.Set("Content-Type", "application/json")
@@ -60,7 +60,7 @@ func TestIngestHandler_ValidPayload(t *testing.T) {
 
 func TestIngestHandler_InvalidPayload(t *testing.T) {
 	producer := &mockProducer{}
-	handler := api.NewIngestHandler(producer, zap.NewNop())
+	handler := api.NewIngestHandler(producer, nil, zap.NewNop())
 
 	body := []byte(`{"device_id":"","timestamp":"2026-04-09T12:00:00Z","temperature":23.5,"humidity":62.3,"soil_moisture":45.1}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry", bytes.NewReader(body))
@@ -80,7 +80,7 @@ func TestIngestHandler_InvalidPayload(t *testing.T) {
 func TestIngestHandler_MethodNotAllowed(t *testing.T) {
 	producer := &mockProducer{}
 	logger := zap.NewNop()
-	router := api.NewRouter(producer, noAuth, logger)
+	router := api.NewRouter(producer, noAuth, nil, logger)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/telemetry", nil)
 	rec := httptest.NewRecorder()
@@ -92,7 +92,7 @@ func TestIngestHandler_MethodNotAllowed(t *testing.T) {
 
 func TestIngestHandler_EmptyBody(t *testing.T) {
 	producer := &mockProducer{}
-	handler := api.NewIngestHandler(producer, zap.NewNop())
+	handler := api.NewIngestHandler(producer, nil, zap.NewNop())
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry", bytes.NewReader([]byte{}))
 	req.Header.Set("Content-Type", "application/json")
@@ -106,7 +106,7 @@ func TestIngestHandler_EmptyBody(t *testing.T) {
 
 func TestIngestHandler_ProducerError(t *testing.T) {
 	producer := &mockProducer{err: errors.New("kafka unavailable")}
-	handler := api.NewIngestHandler(producer, zap.NewNop())
+	handler := api.NewIngestHandler(producer, nil, zap.NewNop())
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry", bytes.NewReader(validJSON()))
 	req.Header.Set("Content-Type", "application/json")
@@ -120,7 +120,7 @@ func TestIngestHandler_ProducerError(t *testing.T) {
 func TestIngestHandler_ContentType(t *testing.T) {
 	producer := &mockProducer{}
 	logger := zap.NewNop()
-	router := api.NewRouter(producer, noAuth, logger)
+	router := api.NewRouter(producer, noAuth, nil, logger)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry", bytes.NewReader(validJSON()))
 	req.Header.Set("Content-Type", "text/plain")

@@ -41,15 +41,19 @@ func TestRequestIDMiddleware(t *testing.T) {
 	})
 }
 
-func TestLoggingMiddleware(t *testing.T) {
+// TestRequestLogFields validates the request-log contract: every completed
+// request logs method, path, status, duration_ms, and request_id. The chain
+// mirrors the router (RequestID wraps Logger) so the id is in context.
+func TestRequestLogFields(t *testing.T) {
 	core, logs := observer.New(zap.InfoLevel)
 	logger := zap.New(core)
 
-	handler := api.Logger(logger)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := api.RequestID(api.Logger(logger)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-	}))
+	})))
 
 	req := httptest.NewRequest(http.MethodGet, "/test-path", nil)
+	req.Header.Set("X-Request-ID", "req-abc-123")
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
@@ -59,14 +63,13 @@ func TestLoggingMiddleware(t *testing.T) {
 	entry := logs.All()[0]
 	require.Equal("request completed", entry.Message)
 
-	fieldMap := make(map[string]interface{})
-	for _, f := range entry.Context {
-		fieldMap[f.Key] = f
-	}
-	assert.Contains(t, fieldMap, "method")
-	assert.Contains(t, fieldMap, "path")
-	assert.Contains(t, fieldMap, "status")
-	assert.Contains(t, fieldMap, "duration")
+	fields := entry.ContextMap()
+	assert.Equal(t, "GET", fields["method"])
+	assert.Equal(t, "/test-path", fields["path"])
+	assert.Equal(t, int64(http.StatusOK), fields["status"])
+	assert.Contains(t, fields, "duration_ms")
+	assert.IsType(t, float64(0), fields["duration_ms"])
+	assert.Equal(t, "req-abc-123", fields["request_id"])
 }
 
 func TestRecoveryMiddleware(t *testing.T) {

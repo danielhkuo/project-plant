@@ -25,7 +25,7 @@ func validBatch(n int) []byte {
 
 func TestBatchHandler_ValidArray(t *testing.T) {
 	producer := &mockProducer{}
-	handler := api.NewBatchIngestHandler(producer, zap.NewNop())
+	handler := api.NewBatchIngestHandler(producer, nil, zap.NewNop())
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/batch", bytes.NewReader(validBatch(3)))
 	req.Header.Set("Content-Type", "application/json")
@@ -39,7 +39,7 @@ func TestBatchHandler_ValidArray(t *testing.T) {
 
 func TestBatchHandler_OneInvalidRejectsWholeBatch(t *testing.T) {
 	producer := &mockProducer{}
-	handler := api.NewBatchIngestHandler(producer, zap.NewNop())
+	handler := api.NewBatchIngestHandler(producer, nil, zap.NewNop())
 
 	// Second element has an empty device_id.
 	body := []byte(`[` + string(validJSON()) + `,` +
@@ -56,7 +56,7 @@ func TestBatchHandler_OneInvalidRejectsWholeBatch(t *testing.T) {
 
 func TestBatchHandler_NotAnArray(t *testing.T) {
 	producer := &mockProducer{}
-	handler := api.NewBatchIngestHandler(producer, zap.NewNop())
+	handler := api.NewBatchIngestHandler(producer, nil, zap.NewNop())
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/batch", bytes.NewReader(validJSON()))
 	req.Header.Set("Content-Type", "application/json")
@@ -70,7 +70,7 @@ func TestBatchHandler_NotAnArray(t *testing.T) {
 
 func TestBatchHandler_EmptyArray(t *testing.T) {
 	producer := &mockProducer{}
-	handler := api.NewBatchIngestHandler(producer, zap.NewNop())
+	handler := api.NewBatchIngestHandler(producer, nil, zap.NewNop())
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/batch", bytes.NewReader([]byte(`[]`)))
 	req.Header.Set("Content-Type", "application/json")

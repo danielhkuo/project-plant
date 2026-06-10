@@ -17,6 +17,11 @@ type Config struct {
 	RedisAddr     string
 	RedisPassword string
 	RedisTTL      time.Duration
+
+	// MetricsAddr is the listen address of the admin HTTP server serving
+	// /metrics and /health (the processor's main loop is a Kafka consumer,
+	// not an HTTP server).
+	MetricsAddr string
 }
 
 // Load reads configuration from environment variables, falling back to
@@ -32,6 +37,8 @@ func Load() Config {
 		RedisAddr:     getenv("REDIS_ADDR", "localhost:6379"),
 		RedisPassword: os.Getenv("REDIS_PASSWORD"),
 		RedisTTL:      getDuration("REDIS_TTL", 5*time.Minute),
+
+		MetricsAddr: getenv("METRICS_ADDR", ":9091"),
 	}
 }
 

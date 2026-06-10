@@ -9,11 +9,11 @@ import (
 
 // Alert represents a triggered alerting rule.
 type Alert struct {
-	AlertID     string                 `json:"alert_id"`
-	DeviceID    string                 `json:"device_id"`
-	RuleName    string                 `json:"rule_name"`
-	Severity    string                 `json:"severity"`
-	TriggeredAt time.Time              `json:"triggered_at"`
+	AlertID     string                   `json:"alert_id"`
+	DeviceID    string                   `json:"device_id"`
+	RuleName    string                   `json:"rule_name"`
+	Severity    string                   `json:"severity"`
+	TriggeredAt time.Time                `json:"triggered_at"`
 	Reading     telemetry.TelemetryEvent `json:"reading"`
 }
 

@@ -12,14 +12,17 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
+	"github.com/danielkuo/project-plant/pkg/health"
+	"github.com/danielkuo/project-plant/pkg/logging"
 	"github.com/danielkuo/project-plant/services/dashboard/internal/api"
 	"github.com/danielkuo/project-plant/services/dashboard/internal/config"
+	"github.com/danielkuo/project-plant/services/dashboard/internal/metrics"
 	"github.com/danielkuo/project-plant/services/dashboard/internal/store"
 	"github.com/danielkuo/project-plant/services/dashboard/internal/ws"
 )
 
 func main() {
-	logger, _ := zap.NewProduction()
+	logger := logging.MustNew("dashboard")
 	defer logger.Sync()
 
 	cfg := config.Load()
@@ -59,7 +62,17 @@ func main() {
 
 	// Create WebSocket handler and wire up router
 	wsHandler := ws.NewWSHandler(hub, logger)
-	router := api.NewRouter(handler, wsHandler, logger)
+
+	// Observability: WS-connection gauge + dependency-aware health checks.
+	m := metrics.New(hub.ClientCount)
+	checks := map[string]health.Check{
+		"postgres": pool.Ping,
+		"redis": func(ctx context.Context) error {
+			return redisClient.Ping(ctx).Err()
+		},
+	}
+
+	router := api.NewRouter(handler, wsHandler, m, checks, logger)
 
 	srv := &http.Server{
 		Addr:         cfg.Addr,

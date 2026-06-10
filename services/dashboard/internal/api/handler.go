@@ -148,17 +148,13 @@ func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, stats)
 }
 
-// Health handles GET /health.
-func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
-}
-
 // computeStatus determines device status from latest reading.
 // Maps to Nothing design system status tokens:
-//   normal   -> --success (#4A9E5C)
-//   warning  -> --warning (#D4A843)
-//   critical -> --accent  (#D71921)
-//   stale    -> --text-disabled (#666666)
+//
+//	normal   -> --success (#4A9E5C)
+//	warning  -> --warning (#D4A843)
+//	critical -> --accent  (#D71921)
+//	stale    -> --text-disabled (#666666)
 func computeStatus(event telemetry.TelemetryEvent) string {
 	// Critical thresholds (from rule engine defaults)
 	if event.Temperature > 60 || event.SoilMoisture < 10 {
