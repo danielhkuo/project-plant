@@ -33,7 +33,7 @@ Each step follows test-driven development: **write tests first**, then implement
 
 **Phase 6 — Production Readiness**
 - [ ] **Step 17:** CI/CD Pipeline + Dockerization
-- [ ] **Step 18:** Observability — Structured Logging, Metrics, Health Checks
+- [x] **Step 18:** Observability — Structured Logging, Metrics, Health Checks
 
 ---
 
@@ -869,7 +869,14 @@ lint (go + python + frontend)
 
 ---
 
-## Step 18: Observability — Structured Logging, Metrics, Health Checks
+## Step 18: Observability — Structured Logging, Metrics, Health Checks ✅
+
+> Completed except two explicitly deferred follow-ons: request-ID propagation
+> through Kafka headers (ingestion → processor logs) and the optional Grafana
+> dashboard JSON. Everything else below — structured JSON logs (shared
+> `pkg/logging`), `/metrics` on all three services (the processor gained an
+> admin HTTP server on `:9091`), and dependency-aware `/health` (shared
+> `pkg/health`) — is implemented and tested.
 
 **Goal:** Make the system debuggable and monitorable. When something goes wrong at 2 AM, structured logs and metrics tell you where.
 

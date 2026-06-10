@@ -77,7 +77,7 @@ func newHandler(devices *mockDeviceReader, history *mockHistoryReader, alerts *m
 func newRouter(devices *mockDeviceReader, history *mockHistoryReader, alerts *mockAlertStore, stats *mockStatsReader) http.Handler {
 	h := newHandler(devices, history, alerts, stats)
 	// Pass nil for wsHandler since REST tests don't need WebSocket
-	return api.NewRouter(h, nil, zap.NewNop())
+	return api.NewRouter(h, nil, nil, nil, zap.NewNop())
 }
 
 // --- REST Handler Tests ---

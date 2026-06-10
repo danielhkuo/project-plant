@@ -11,7 +11,7 @@ type TelemetryEvent struct {
 	Timestamp    time.Time `json:"timestamp"`
 	Temperature  float64   `json:"temperature"`
 	Humidity     float64   `json:"humidity"`
-	SoilMoisture float64  `json:"soil_moisture"`
+	SoilMoisture float64   `json:"soil_moisture"`
 }
 
 // Validate checks that all fields are within acceptable ranges.

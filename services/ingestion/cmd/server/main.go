@@ -9,14 +9,16 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/danielkuo/project-plant/pkg/logging"
 	"github.com/danielkuo/project-plant/services/ingestion/internal/api"
 	"github.com/danielkuo/project-plant/services/ingestion/internal/auth"
 	"github.com/danielkuo/project-plant/services/ingestion/internal/config"
 	"github.com/danielkuo/project-plant/services/ingestion/internal/kafka"
+	"github.com/danielkuo/project-plant/services/ingestion/internal/metrics"
 )
 
 func main() {
-	logger, _ := zap.NewProduction()
+	logger := logging.MustNew("ingestion")
 	defer logger.Sync()
 
 	cfg := config.Load()
@@ -24,8 +26,10 @@ func main() {
 	producer := kafka.NewKafkaProducer(cfg.Kafka)
 	defer producer.Close()
 
-	// Auth protects the /api/v1/* routes only; /health stays public.
-	router := api.NewRouter(producer, auth.Middleware(cfg.Auth), logger)
+	m := metrics.New()
+
+	// Auth protects the /api/v1/* routes only; /health and /metrics stay public.
+	router := api.NewRouter(producer, auth.Middleware(cfg.Auth), m, logger)
 
 	srv := &http.Server{
 		Addr:         cfg.Addr,

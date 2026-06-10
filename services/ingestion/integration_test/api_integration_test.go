@@ -41,7 +41,7 @@ func startTestServer(t *testing.T, broker, topic string) string {
 	authn := auth.NewStaticKeyAuthenticator(map[string]auth.DeviceIdentity{
 		testAPIKey: {DeviceID: "dev-001"},
 	})
-	router := api.NewRouter(producer, auth.Middleware(authn), zap.NewNop())
+	router := api.NewRouter(producer, auth.Middleware(authn), nil, zap.NewNop())
 
 	srv := newLocalServer(t, router)
 	t.Cleanup(func() { producer.Close() })
@@ -182,7 +182,7 @@ func TestAPI_Healthcheck_KafkaDown(t *testing.T) {
 	})
 	t.Cleanup(func() { producer.Close() })
 	authn := auth.NewStaticKeyAuthenticator(map[string]auth.DeviceIdentity{testAPIKey: {DeviceID: "dev-001"}})
-	url := newLocalServer(t, api.NewRouter(producer, auth.Middleware(authn), zap.NewNop()))
+	url := newLocalServer(t, api.NewRouter(producer, auth.Middleware(authn), nil, zap.NewNop()))
 
 	resp, err := http.Get(url + "/health")
 	require.NoError(t, err)
