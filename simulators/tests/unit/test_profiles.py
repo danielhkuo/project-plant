@@ -3,7 +3,7 @@
 import pytest
 
 from simulators.adapters import SimulatedSensorAdapter
-from simulators.profiles import Profile, get_profile, PROFILES
+from simulators.profiles import Profile, get_profile
 
 
 class TestProfiles:

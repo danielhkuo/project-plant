@@ -1,10 +1,7 @@
 """Tests for SensorAdapter interface and SimulatedSensorAdapter implementation."""
 
-import asyncio
 import inspect
-from abc import ABC
 
-import pytest
 
 from simulators.adapters import SensorAdapter, SensorReading, SimulatedSensorAdapter
 from simulators.device import Device
