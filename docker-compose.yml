@@ -23,10 +23,10 @@ services:
       CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
     healthcheck:
       test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
-      interval: 10s
+      interval: 5s
       timeout: 10s
-      retries: 10
-      start_period: 30s
+      retries: 20
+      start_period: 10s
 
   postgres:
     image: postgres:17-alpine
@@ -53,6 +53,149 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  # One-shot Kafka init: creates the telemetry topic and — by running a real
+  # consumer-group session — forces the broker to materialize the
+  # __consumer_offsets topic and group coordinator. Without this, a consumer
+  # that joins a fresh broker can hit "Group Coordinator Not Available" and
+  # idle, so the processor gates on this completing.
+  kafka-init:
+    image: confluentinc/cp-kafka:7.9.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint:
+      - sh
+      - -ec
+      - |
+        kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists \
+          --topic telemetry.events --partitions 1 --replication-factor 1
+        kafka-console-consumer --bootstrap-server kafka:29092 \
+          --topic telemetry.events --group plant-init-probe \
+          --timeout-ms 5000 --max-messages 1 || true
+    restart: "no"
+
+  # One-shot schema migration; app services that touch Postgres gate on its
+  # successful completion. Reuses the SQL files that `make migrate` applies.
+  migrate:
+    image: postgres:17-alpine
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: plant
+    volumes:
+      - ./migrations:/migrations:ro
+    entrypoint: >
+      sh -c 'for f in /migrations/*.up.sql; do
+        echo "applying $$f";
+        psql -h postgres -U plant -d plantdb -v ON_ERROR_STOP=1 -f "$$f" || exit 1;
+      done'
+    restart: "no"
+
+  ingestion:
+    build:
+      context: .
+      dockerfile: services/ingestion/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      LISTEN_ADDR: ":8080"
+      KAFKA_BROKERS: kafka:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/healthcheck", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+      start_period: 5s
+
+  processor:
+    build:
+      context: .
+      dockerfile: services/processor/Dockerfile
+    ports:
+      - "9091:9091" # admin: /metrics + /health
+    environment:
+      KAFKA_BROKERS: kafka:29092
+      POSTGRES_DSN: postgres://plant:plant@postgres:5432/plantdb?sslmode=disable
+      REDIS_ADDR: redis:6379
+      METRICS_ADDR: ":9091"
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "/healthcheck", "http://localhost:9091/health"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+      start_period: 5s
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: services/dashboard/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      LISTEN_ADDR: ":8081"
+      POSTGRES_DSN: postgres://plant:plant@postgres:5432/plantdb?sslmode=disable
+      REDIS_ADDR: redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "/healthcheck", "http://localhost:8081/health"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+      start_period: 5s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Next's /api/* rewrite proxies server-side, so it must target the
+        # dashboard by its in-network name (baked at build time).
+        DASHBOARD_URL: http://dashboard:8081
+    ports:
+      - "3000:3000"
+    depends_on:
+      dashboard:
+        condition: service_healthy
+    healthcheck:
+      # 127.0.0.1, not localhost: alpine resolves localhost to ::1 first and
+      # the Next standalone server binds IPv4 only.
+      test: ["CMD", "wget", "-qO/dev/null", "http://127.0.0.1:3000"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+      start_period: 5s
+
+  # Load generator — opt-in via `docker compose --profile load up simulators`.
+  simulators:
+    profiles: ["load"]
+    build:
+      context: ./simulators
+    command:
+      [
+        "--count", "10",
+        "--profile", "tropical",
+        "--duration", "60",
+        "--api-url", "http://ingestion:8080",
+        "--api-key", "dev-key-001",
+      ]
+    depends_on:
+      ingestion:
+        condition: service_healthy
 
 volumes:
   pgdata:

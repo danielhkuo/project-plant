@@ -1,0 +1,14 @@
+# Keeps the Go service build contexts (repo root) lean — their Dockerfiles
+# only COPY pkg/ and services/<name>/. The frontend and simulators build from
+# their own directories with their own ignores.
+.git
+.github
+docs
+frontend
+simulators
+tests
+migrations
+**/.venv
+**/node_modules
+**/__pycache__
+**/*.log

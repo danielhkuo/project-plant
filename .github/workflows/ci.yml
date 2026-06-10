@@ -1,0 +1,210 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 8 * * *" # nightly load test
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: services/ingestion/go.mod
+          cache-dependency-path: "**/go.sum"
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l pkg services)
+          if [ -n "$unformatted" ]; then
+            echo "gofmt needed on:" && echo "$unformatted" && exit 1
+          fi
+      - name: go vet
+        run: |
+          for mod in pkg services/ingestion services/processor services/dashboard; do
+            (cd "$mod" && go vet ./...)
+          done
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: ruff
+        run: |
+          pip install ruff
+          ruff check simulators
+
+  go-unit:
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: services/ingestion/go.mod
+          cache-dependency-path: "**/go.sum"
+      - name: Unit tests (pkg + services)
+        run: |
+          (cd pkg && go test ./...)
+          (cd services/ingestion && go test -race ./internal/...)
+          (cd services/processor && go test -race ./internal/...)
+          (cd services/dashboard && go test -race ./internal/...)
+
+  python-unit:
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Simulator unit tests
+        run: |
+          cd simulators
+          pip install -e ".[dev]"
+          python -m pytest tests/unit -q
+
+  contract:
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: JSON schema contract tests
+        run: |
+          cd tests
+          pip install -e .
+          python -m pytest contract -q
+
+  frontend-unit:
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Vitest + production build
+        run: |
+          cd frontend
+          npm ci
+          npm test
+          npm run build
+
+  go-integration:
+    needs: go-unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: services/ingestion/go.mod
+          cache-dependency-path: "**/go.sum"
+      - name: Integration tests (testcontainers)
+        run: |
+          (cd services/ingestion && go test -tags=integration -race ./integration_test/...)
+          (cd services/processor && go test -tags=integration ./integration_test/...)
+
+  e2e:
+    needs: [go-unit, python-unit, contract]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: services/ingestion/go.mod
+          cache-dependency-path: "**/go.sum"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Full-system e2e (host services + compose infra)
+        env:
+          E2E_DURATION_SECONDS: "30"
+          E2E_DEVICES: "100"
+        run: |
+          cd tests
+          pip install -e .
+          python -m pytest e2e -v -m e2e --timeout=600
+
+  # Builds every Docker image and boots the entire containerized stack from
+  # scratch (Step 17 acceptance), then drives real traffic through it with the
+  # simulator integration suite.
+  compose-stack:
+    needs: go-unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build images
+        run: docker compose build
+      - name: Boot full stack (healthy < 60s)
+        run: |
+          start=$(date +%s)
+          docker compose up -d --wait
+          elapsed=$(( $(date +%s) - start ))
+          echo "stack healthy in ${elapsed}s"
+          docker compose ps
+          test "$elapsed" -lt 60
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Simulator integration tests against the stack
+        run: |
+          cd simulators
+          pip install -e ".[dev]"
+          python -m pytest tests/integration -v -m integration
+      - name: Smoke /metrics
+        run: |
+          curl -fsS localhost:8080/metrics | grep events_ingested_total
+          curl -fsS localhost:9091/metrics | grep events_processed_total
+      - name: Teardown
+        if: always()
+        run: docker compose down -v
+
+  # Nightly: SLO-gated load test against the containerized stack.
+  load-test:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: [go-unit]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Boot full stack
+        run: |
+          docker compose build
+          docker compose up -d --wait
+      - uses: grafana/setup-k6-action@v1
+      - name: k6 ingestion load (STRICT thresholds)
+        env:
+          STRICT: "1"
+        run: k6 run tests/load/k6/ingestion_load.js
+      - name: k6 dashboard reads under write load (STRICT thresholds)
+        env:
+          STRICT: "1"
+        run: |
+          docker compose --profile load up -d simulators
+          k6 run tests/load/k6/dashboard_read.js
+      - name: Teardown
+        if: always()
+        run: docker compose --profile load down -v

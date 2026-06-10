@@ -130,13 +130,15 @@ def stack(tmp_path_factory) -> Stack:
         log_dir=log_dir,
     )
 
-    # 2. Fresh infra + schema.
+    # 2. Fresh infra + schema. Name the infra services explicitly: the compose
+    # file also defines the containerized app services (Step 17), but this
+    # suite runs the Go services as host subprocesses on the same ports.
     subprocess.run(
         ["docker", "compose", "-p", PROJECT, "-f", str(COMPOSE_FILE), "down", "-v"],
         cwd=REPO_ROOT,
         check=False,
     )
-    s._compose("up", "-d", "--wait")
+    s._compose("up", "-d", "--wait", "kafka", "postgres", "redis")
     _apply_migrations()
 
     # 3. Launch services as subprocesses.

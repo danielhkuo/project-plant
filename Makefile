@@ -1,7 +1,8 @@
 .PHONY: test-all test-go-unit test-go-integration test-python-unit test-python-integration \
        test-contract test-e2e test-frontend lint-go lint-python lint-frontend \
        dev-frontend demo-frontend build-frontend load-test-quick load-test-full load-test-soak \
-       load-test-dashboard migrate run-ingestion run-processor run-dashboard run-simulators
+       load-test-dashboard migrate run-ingestion run-processor run-dashboard run-simulators \
+       up down infra-up infra-down infra-test-up infra-test-down
 
 # ── Go ──────────────────────────────────────────────
 
@@ -86,8 +87,16 @@ load-test-dashboard:
 
 # ── Docker ──────────────────────────────────────────
 
+# Full containerized stack (infra + ingestion/processor/dashboard/frontend).
+up:
+	docker compose up -d --build --wait
+
+down:
+	docker compose down -v
+
+# Infra only (Kafka/Postgres/Redis) — for running the Go services on the host.
 infra-up:
-	docker compose up -d --wait
+	docker compose up -d --wait kafka postgres redis
 
 infra-down:
 	docker compose down -v
