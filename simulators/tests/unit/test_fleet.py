@@ -2,7 +2,6 @@
 
 import asyncio
 
-import pytest
 
 from simulators.adapters import SensorAdapter, SensorReading
 from simulators.fleet import Fleet
