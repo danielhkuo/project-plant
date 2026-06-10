@@ -32,7 +32,7 @@ Each step follows test-driven development: **write tests first**, then implement
 - [x] **Step 16:** Load Testing + Performance Validation
 
 **Phase 6 — Production Readiness**
-- [ ] **Step 17:** CI/CD Pipeline + Dockerization
+- [x] **Step 17:** CI/CD Pipeline + Dockerization
 - [x] **Step 18:** Observability — Structured Logging, Metrics, Health Checks
 
 ---
@@ -822,7 +822,16 @@ Integration (`simulators/tests/integration/test_e2e_ingestion.py`, requires full
 
 ---
 
-## Step 17: CI/CD Pipeline + Dockerization
+## Step 17: CI/CD Pipeline + Dockerization ✅
+
+> Implemented with two deliberate deviations: the frontend ships as a Next.js
+> standalone server (node:22-alpine) rather than nginx static files — the app
+> uses server-side rewrites to proxy /api/* to the dashboard, which a static
+> export cannot do; and there is no `frontend-e2e` CI job because no frontend
+> e2e suite exists (frontend CI runs vitest + a production build instead).
+> Compose adds two one-shot init services: `migrate` (schema) and `kafka-init`
+> (creates the topic and forces group-coordinator initialization so the
+> processor can't race a fresh broker).
 
 **Goal:** Automate everything. Every push runs the full test suite. Every merge to main builds deployable Docker images.
 

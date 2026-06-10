@@ -4,6 +4,11 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
+# Rewrite target for /api/* — baked at build time by next.config.ts
+# (compose passes http://dashboard:8081; default suits local docker run).
+ARG DASHBOARD_URL=http://localhost:8081
+ENV DASHBOARD_URL=$DASHBOARD_URL
+
 COPY package.json package-lock.json* ./
 RUN npm ci
 
