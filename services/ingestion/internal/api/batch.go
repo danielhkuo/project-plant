@@ -75,6 +75,13 @@ func (h *BatchIngestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for i, event := range events {
 		if err := h.producer.Publish(r.Context(), event); err != nil {
 			h.metrics.EventsIngested(metrics.StatusError, len(events))
+			// A canceled request context means the client disconnected (or
+			// the server is draining) mid-publish — normal, not a fault.
+			if r.Context().Err() != nil {
+				h.logger.Warn("client canceled request during batch publish",
+					zap.Int("index", i), zap.Error(err))
+				return
+			}
 			h.logger.Error("failed to publish batch event", zap.Int("index", i), zap.Error(err))
 			writeError(w, http.StatusServiceUnavailable, "failed to publish event", "")
 			return

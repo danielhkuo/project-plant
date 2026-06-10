@@ -55,6 +55,12 @@ func (h *IngestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.producer.Publish(r.Context(), event); err != nil {
 		h.metrics.EventsIngested(metrics.StatusError, 1)
+		// A canceled request context means the client disconnected (or the
+		// server is draining) mid-publish — normal operation, not a fault.
+		if r.Context().Err() != nil {
+			h.logger.Warn("client canceled request during publish", zap.Error(err))
+			return
+		}
 		h.logger.Error("failed to publish event", zap.Error(err))
 		writeError(w, http.StatusServiceUnavailable, "failed to publish event", "")
 		return

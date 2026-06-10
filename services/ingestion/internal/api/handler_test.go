@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 
 	"github.com/danielkuo/project-plant/pkg/telemetry"
 	"github.com/danielkuo/project-plant/services/ingestion/internal/api"
@@ -129,4 +130,27 @@ func TestIngestHandler_ContentType(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusUnsupportedMediaType, rec.Code)
+}
+
+// TestIngest_ClientCancellation_NoErrorLog is a regression test: a client
+// that disconnects mid-publish (canceled request context) is normal
+// operation and must log at warn, not error — error-level entries fail the
+// e2e suite's no-error-logs assertion.
+func TestIngest_ClientCancellation_NoErrorLog(t *testing.T) {
+	core, logs := observer.New(zap.WarnLevel)
+	producer := &mockProducer{err: context.Canceled}
+	handler := api.NewIngestHandler(producer, nil, zap.New(core))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // client already gone
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry", bytes.NewReader(validJSON())).WithContext(ctx)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	for _, entry := range logs.All() {
+		assert.Less(t, entry.Level, zap.ErrorLevel,
+			"client cancellation must not log at error level: %s", entry.Message)
+	}
+	assert.Equal(t, 1, logs.FilterLevelExact(zap.WarnLevel).Len(), "expected one warn entry")
 }
