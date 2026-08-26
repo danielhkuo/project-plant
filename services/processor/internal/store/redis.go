@@ -14,6 +14,10 @@ import (
 
 const defaultTTL = 5 * time.Minute
 
+// activeDevicesKey holds the device IDs seen inside the TTL window, as a
+// sorted set scored by the time of the last write.
+const activeDevicesKey = "devices:active"
+
 // RedisStore implements hot-cache storage for latest device readings.
 type RedisStore struct {
 	client *redis.Client
@@ -36,9 +40,16 @@ func (s *RedisStore) SetLatest(ctx context.Context, deviceID string, event telem
 	}
 
 	key := fmt.Sprintf("device:%s:latest", deviceID)
+	// devices:active is a sorted set scored by write time, not a plain set: a
+	// set never forgets a device that stopped reporting, so GetAllLatest would
+	// pay a wasted GET for every device ever seen. Scoring by time lets each
+	// write drop everything older than the value keys' own TTL.
+	now := time.Now()
+	cutoff := now.Add(-s.ttl).Unix()
 	pipe := s.client.Pipeline()
 	pipe.Set(ctx, key, data, s.ttl)
-	pipe.SAdd(ctx, "devices:active", deviceID)
+	pipe.ZAdd(ctx, activeDevicesKey, redis.Z{Score: float64(now.Unix()), Member: deviceID})
+	pipe.ZRemRangeByScore(ctx, activeDevicesKey, "-inf", fmt.Sprintf("(%d", cutoff))
 	pipe.Publish(ctx, "readings:"+deviceID, data)
 	_, err = pipe.Exec(ctx)
 	return err
@@ -61,7 +72,7 @@ func (s *RedisStore) GetLatest(ctx context.Context, deviceID string) (telemetry.
 
 // GetAllLatest retrieves the latest reading for all active devices.
 func (s *RedisStore) GetAllLatest(ctx context.Context) (map[string]telemetry.TelemetryEvent, error) {
-	deviceIDs, err := s.client.SMembers(ctx, "devices:active").Result()
+	deviceIDs, err := s.client.ZRange(ctx, activeDevicesKey, 0, -1).Result()
 	if err != nil {
 		return nil, err
 	}
