@@ -1,12 +1,16 @@
-// k6 ingestion load test — ramp 0->500 VUs over 2m, sustain 5m.
+// k6 closed-loop stress test — ramp 0->500 VUs over 2m, sustain 5m.
 //
-// Run:  k6 run tests/load/k6/ingestion_load.js
-// CI:   STRICT=1 k6 run ...   (thresholds hard-fail; locally they're informational)
+// Each VU fires its next request as soon as the last one returns (no sleep),
+// so throughput is whatever the server can absorb (~6,200 RPS on CI), not 500.
+// That makes it a capacity/stress run, NOT the SLO gate: it has no thresholds.
+// The p99 < 50ms @ 500 RPS gate is sustained_throughput.js.
+//
+// Run:  k6 run tests/load/k6/ingestion_load.js   (or: make load-test-stress)
 //
 // Env overrides: API_URL, API_KEY, RAMP_TARGET, RAMP_UP, SUSTAIN.
 import http from "k6/http";
 import { check } from "k6";
-import { thresholds, telemetryPayload, authHeaders } from "./lib.js";
+import { telemetryPayload, authHeaders } from "./lib.js";
 
 const API_URL = __ENV.API_URL || "http://localhost:8080";
 const API_KEY = __ENV.API_KEY || "dev-key-001";
@@ -25,12 +29,6 @@ export const options = {
       gracefulStop: "10s",
     },
   },
-  // p99 < 50ms, error rate < 0.1%, throughput > 500 rps — gated only when STRICT=1.
-  thresholds: thresholds({
-    http_req_duration: ["p(99)<50"],
-    http_req_failed: ["rate<0.001"],
-    http_reqs: ["rate>500"],
-  }),
 };
 
 export default function () {

@@ -1,7 +1,7 @@
 .PHONY: test-all test-go-unit test-go-integration test-python-unit test-python-integration \
        test-contract test-e2e test-frontend lint-go lint-python lint-frontend \
-       dev-frontend demo-frontend build-frontend load-test-quick load-test-full load-test-soak \
-       load-test-dashboard migrate run-ingestion run-processor run-dashboard run-simulators \
+       dev-frontend demo-frontend build-frontend load-test-quick load-test-slo load-test-stress \
+       load-test-soak load-test-dashboard migrate run-ingestion run-processor run-dashboard run-simulators \
        up down infra-up infra-down infra-test-up infra-test-down
 
 # ── Go ──────────────────────────────────────────────
@@ -76,7 +76,12 @@ test-full: test-all-integration test-e2e
 load-test-quick:
 	cd tests/load && vegeta attack -targets=vegeta/ingestion.vegeta -rate=500/s -duration=30s | vegeta report
 
-load-test-full:
+# Open-loop SLO check, same as the nightly CI gate (add STRICT=1 to hard-fail).
+load-test-slo:
+	cd tests/load && RATE=$${RATE:-500} DURATION=$${DURATION:-5m} k6 run k6/sustained_throughput.js
+
+# Closed-loop stress run (500 VUs, no sleep): finds the ceiling, never gates.
+load-test-stress:
 	cd tests/load && k6 run k6/ingestion_load.js
 
 load-test-soak:
