@@ -1,7 +1,11 @@
-// k6 soak test — constant 500 RPS for 30 minutes.
+// k6 open-loop ingestion test — constant 500 RPS arrival rate (default 30m soak).
 //
-// Run:  k6 run tests/load/k6/sustained_throughput.js
-// CI:   STRICT=1 k6 run ...   (nightly only — this is a 30m test)
+// This is the SLO gate (p99 < 50ms @ 500 RPS). constant-arrival-rate starts
+// RATE requests/s regardless of how fast the server answers, so the load is
+// fixed and latency is what's measured.
+//
+// Run:  k6 run tests/load/k6/sustained_throughput.js            (30m soak)
+// CI:   RATE=500 DURATION=5m STRICT=1 k6 run ...                 (nightly gate)
 //
 // Env overrides: API_URL, API_KEY, RATE, DURATION.
 import http from "k6/http";
