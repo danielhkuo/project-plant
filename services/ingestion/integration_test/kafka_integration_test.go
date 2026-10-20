@@ -130,21 +130,24 @@ func TestProducer_MessageOrdering(t *testing.T) {
 	producer := kafkapkg.NewKafkaProducer(cfg)
 	defer producer.Close()
 
-	// Publish events with sequential temperatures
-	for i := 0; i < 10; i++ {
+	// Publish events with sequential temperatures. Enough serial writes that a
+	// producer which doesn't wait for acks reliably shows reordering; with 10
+	// it only failed occasionally.
+	const n = 1000
+	for i := 0; i < n; i++ {
 		event := testEvent("dev-order")
 		event.Temperature = float64(i)
 		require.NoError(t, producer.Publish(context.Background(), event))
 	}
 
-	msgs := readMessages(t, broker, topic, 10, 10*time.Second)
-	require.Len(t, msgs, 10)
+	msgs := readMessages(t, broker, topic, n, 30*time.Second)
+	require.Len(t, msgs, n)
 
 	// Same partition key = same partition = ordered
 	for i, msg := range msgs {
 		var event telemetry.TelemetryEvent
 		require.NoError(t, json.Unmarshal(msg.Value, &event))
-		assert.Equal(t, float64(i), event.Temperature, "message %d out of order", i)
+		require.Equal(t, float64(i), event.Temperature, "message %d out of order", i)
 	}
 }
 
