@@ -38,7 +38,9 @@ jobs:
           python-version: "3.12"
       - name: ruff
         run: |
-          pip install ruff
+          # Pinned: ruff 0.16 widened its default rule set and broke this job.
+          # Keep in sync with simulators/pyproject.toml.
+          pip install ruff==0.15.22
           ruff check simulators
 
   go-unit:
