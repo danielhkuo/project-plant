@@ -195,10 +195,14 @@ jobs:
           docker compose build
           docker compose up -d --wait
       - uses: grafana/setup-k6-action@v1
-      - name: k6 ingestion load (STRICT thresholds)
+      # Open-loop: a constant 500 RPS arrival rate, matching the SLO (p99 < 50ms
+      # @ 500 RPS). The closed-loop ingestion_load.js is a stress run, not a gate.
+      - name: k6 ingestion @ 500 RPS (STRICT thresholds)
         env:
           STRICT: "1"
-        run: k6 run tests/load/k6/ingestion_load.js
+          RATE: "500"
+          DURATION: "5m"
+        run: k6 run tests/load/k6/sustained_throughput.js
       - name: k6 dashboard reads under write load (STRICT thresholds)
         env:
           STRICT: "1"
