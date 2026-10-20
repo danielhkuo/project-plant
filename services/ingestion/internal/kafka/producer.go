@@ -29,6 +29,11 @@ func NewKafkaProducer(cfg ProducerConfig) *KafkaProducer {
 		MaxAttempts:  cfg.MaxRetries,
 		Compression:  compress.Snappy,
 		Async:        false, // synchronous for reliable delivery
+		// A Writer built as a struct literal does NOT inherit NewWriter's
+		// 0 -> RequireAll defaulting, so an unset RequiredAcks means
+		// RequireNone: WriteMessages would return before the broker durably
+		// held the record. Wait for the full ISR instead.
+		RequiredAcks: kafkago.RequireAll,
 	}
 
 	return &KafkaProducer{writer: w, brokers: cfg.Brokers, topic: cfg.Topic}
