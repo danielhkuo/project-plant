@@ -4,15 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"go.uber.org/zap"
 
 	"github.com/danielkuo/project-plant/pkg/telemetry"
 	"github.com/danielkuo/project-plant/services/processor/internal/engine"
 )
-
-const maxRetries = 3
 
 // Result label values reported to Metrics.EventProcessed.
 const (
@@ -47,9 +44,9 @@ func (c *Consumer) WithMetrics(m Metrics) *Consumer {
 	return c
 }
 
-// Process handles a single raw message from Kafka.
+// Process handles a single raw message from Kafka in one attempt.
 // Returns nil if the message was processed (or skipped if malformed).
-// Returns an error only if a retryable store/publish failure persists.
+// Returns an error if the durable write fails; Run decides whether to retry.
 func (c *Consumer) Process(ctx context.Context, msg []byte) error {
 	var event telemetry.TelemetryEvent
 	if err := json.Unmarshal(msg, &event); err != nil {
@@ -58,12 +55,10 @@ func (c *Consumer) Process(ctx context.Context, msg []byte) error {
 		return nil // skip malformed, don't retry
 	}
 
-	// Write to durable storage with retries
-	if err := c.withRetry(ctx, "store.Write", func() error {
-		return c.store.Write(ctx, event)
-	}); err != nil {
-		c.eventProcessed(ResultError)
-		return fmt.Errorf("store.Write failed after retries: %w", err)
+	// Write to durable storage. On failure Run retries the whole message, so
+	// the outcome is counted once, when it is final.
+	if err := c.store.Write(ctx, event); err != nil {
+		return fmt.Errorf("store.Write: %w", err)
 	}
 
 	// Update hot cache
@@ -96,27 +91,4 @@ func (c *Consumer) eventProcessed(result string) {
 	if c.metrics != nil {
 		c.metrics.EventProcessed(result)
 	}
-}
-
-func (c *Consumer) withRetry(ctx context.Context, name string, fn func() error) error {
-	var lastErr error
-	for attempt := 0; attempt < maxRetries; attempt++ {
-		if err := fn(); err != nil {
-			lastErr = err
-			c.logger.Warn("retrying operation",
-				zap.String("operation", name),
-				zap.Int("attempt", attempt+1),
-				zap.Error(err),
-			)
-			backoff := time.Duration(1<<uint(attempt)) * 100 * time.Millisecond
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case <-time.After(backoff):
-			}
-			continue
-		}
-		return nil
-	}
-	return lastErr
 }

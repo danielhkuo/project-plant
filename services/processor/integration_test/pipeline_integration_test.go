@@ -146,9 +146,9 @@ type pipeline struct {
 	writer *kafkago.Writer
 }
 
-// startPipeline creates a topic, runs the background read loop (mirroring
-// cmd/processor/main.go) wired to the given store/publisher, and returns a
-// producer handle.
+// startPipeline creates a topic, runs the production read loop
+// (consumer.Run) wired to the given store/publisher, and returns a producer
+// handle.
 func startPipeline(t *testing.T, in *infra, st consumer.EventStore, alertPub consumer.AlertPublisher) *pipeline {
 	t.Helper()
 	topic := fmt.Sprintf("telemetry.events.%d", time.Now().UnixNano())
@@ -162,8 +162,12 @@ func startPipeline(t *testing.T, in *infra, st consumer.EventStore, alertPub con
 		StartOffset: kafkago.FirstOffset,
 	})
 	ctx, cancel := context.WithCancel(context.Background())
-	go runLoop(ctx, reader, c)
-	t.Cleanup(func() { cancel(); reader.Close() })
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		consumer.Run(ctx, reader, c, zap.NewNop())
+	}()
+	t.Cleanup(func() { stopRun(t, cancel, done); reader.Close() })
 
 	writer := &kafkago.Writer{Addr: kafkago.TCP(in.broker), Topic: topic, BatchTimeout: 5 * time.Millisecond}
 	t.Cleanup(func() { writer.Close() })
@@ -177,17 +181,15 @@ func newStandardPipeline(t *testing.T) *pipeline {
 	return startPipeline(t, in, standardStore(in.pool, in.redis), alert.NewRedisAlertPublisher(redisPub{in.redis}))
 }
 
-// runLoop mirrors the read loop in cmd/processor/main.go: commit only on success.
-func runLoop(ctx context.Context, reader *kafkago.Reader, c *consumer.Consumer) {
-	for {
-		msg, err := reader.FetchMessage(ctx)
-		if err != nil {
-			return // context cancelled or reader closed
-		}
-		if err := c.Process(ctx, msg.Value); err != nil {
-			continue // do not commit -> redelivered on next session
-		}
-		_ = reader.CommitMessages(ctx, msg)
+// stopRun cancels a background consumer.Run and waits (bounded) for it to
+// return, so it never outlives the infra the test tears down next.
+func stopRun(t *testing.T, cancel context.CancelFunc, done <-chan struct{}) {
+	t.Helper()
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		t.Error("consumer.Run did not return after cancel")
 	}
 }
 
@@ -309,22 +311,32 @@ func TestPipeline_100Events_AllProcessed(t *testing.T) {
 }
 
 // failableStore wraps the real composite store and can simulate Postgres
-// downtime by failing Write, exercising the "no commit -> Kafka buffers ->
-// redelivery on recovery" guarantee.
+// downtime by failing Write, exercising the "retry in place, commit nothing
+// until the store recovers" guarantee.
 type failableStore struct {
 	*store.CompositeStore
-	mu   sync.Mutex
-	fail bool
+	mu     sync.Mutex
+	fail   bool
+	failed int
 }
 
 func (s *failableStore) Write(ctx context.Context, e telemetry.TelemetryEvent) error {
 	s.mu.Lock()
 	f := s.fail
+	if f {
+		s.failed++
+	}
 	s.mu.Unlock()
 	if f {
 		return fmt.Errorf("simulated postgres outage")
 	}
 	return s.CompositeStore.Write(ctx, e)
+}
+
+func (s *failableStore) failedWrites() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.failed
 }
 
 func (s *failableStore) setFail(v bool) {
@@ -356,27 +368,29 @@ func TestPipeline_KafkaBuffering(t *testing.T) {
 	}
 	require.NoError(t, writer.WriteMessages(context.Background(), msgs...))
 
-	newReader := func() *kafkago.Reader {
-		return kafkago.NewReader(kafkago.ReaderConfig{
-			Brokers: []string{in.broker}, Topic: topic, GroupID: groupID, StartOffset: kafkago.FirstOffset,
-		})
-	}
+	// One reader and one Run for the whole test, as in production: the
+	// outage starts and ends while the same session is consuming. kafka-go
+	// never re-delivers a fetched message within a session, so a message that
+	// failed has to be retried in place, not skipped and committed past.
+	reader := kafkago.NewReader(kafkago.ReaderConfig{
+		Brokers: []string{in.broker}, Topic: topic, GroupID: groupID, StartOffset: kafkago.FirstOffset,
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		consumer.Run(ctx, reader, c, zap.NewNop())
+	}()
+	defer func() { stopRun(t, cancel, done); reader.Close() }()
 
-	// Session 1: store down -> every Process fails -> nothing committed.
-	ctx1, cancel1 := context.WithTimeout(context.Background(), 5*time.Second)
-	r1 := newReader()
-	runLoop(ctx1, r1, c)
-	cancel1()
-	r1.Close()
+	// Postgres is "down": the loop keeps failing on the first message. Six
+	// failed writes is a ~3 s outage (100 ms backoff doubling), longer than
+	// any small fixed retry budget that would give up and commit past.
+	eventually(t, 30*time.Second, func() bool { return fs.failedWrites() >= 6 })
 	require.Equal(t, 0, eventCount(t, in.pool, "dev-buf"), "no events should be stored while postgres is down")
 
-	// Recovery: store back up. Session 2 (same group) resumes from the last
-	// committed offset (none) and redelivers all 100 events -> zero data loss.
+	// Postgres recovers mid-session. Every event, including the ones the loop
+	// fetched during the outage, must arrive: zero data loss.
 	fs.setFail(false)
-	ctx2, cancel2 := context.WithCancel(context.Background())
-	r2 := newReader()
-	go runLoop(ctx2, r2, c)
-	defer func() { cancel2(); r2.Close() }()
-
 	eventually(t, 30*time.Second, func() bool { return eventCount(t, in.pool, "dev-buf") == 100 })
 }
