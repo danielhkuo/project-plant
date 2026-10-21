@@ -19,6 +19,8 @@ type Metrics struct {
 	eventsProcessed *prometheus.CounterVec
 	alertsFired     *prometheus.CounterVec
 	consumerLag     prometheus.Gauge
+	processRetries  prometheus.Counter
+	lastCommit      prometheus.Gauge
 }
 
 // New creates the collectors on a fresh registry.
@@ -46,12 +48,25 @@ func New() *Metrics {
 		Help: "Messages between the latest offset and this consumer group's position.",
 	})
 
-	reg.MustRegister(eventsProcessed, alertsFired, consumerLag)
+	// While one message is retried, kafka-go stops refreshing its lag stats,
+	// so kafka_consumer_lag freezes. These two show the stall instead.
+	processRetries := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "processor_process_retries_total",
+		Help: "Failed processing attempts that will be retried on the same message.",
+	})
+	lastCommit := prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "processor_last_commit_timestamp_seconds",
+		Help: "Unix time of the last successful Kafka offset commit; 0 until the first.",
+	})
+
+	reg.MustRegister(eventsProcessed, alertsFired, consumerLag, processRetries, lastCommit)
 	return &Metrics{
 		registry:        reg,
 		eventsProcessed: eventsProcessed,
 		alertsFired:     alertsFired,
 		consumerLag:     consumerLag,
+		processRetries:  processRetries,
+		lastCommit:      lastCommit,
 	}
 }
 
@@ -63,6 +78,16 @@ func (m *Metrics) EventProcessed(result string) {
 // AlertFired implements consumer.Metrics.
 func (m *Metrics) AlertFired(rule, severity string) {
 	m.alertsFired.WithLabelValues(rule, severity).Inc()
+}
+
+// ProcessRetried implements consumer.Metrics.
+func (m *Metrics) ProcessRetried() {
+	m.processRetries.Inc()
+}
+
+// OffsetCommitted implements consumer.Metrics.
+func (m *Metrics) OffsetCommitted() {
+	m.lastCommit.SetToCurrentTime()
 }
 
 // SetConsumerLag updates the lag gauge from the Kafka reader's stats.
@@ -78,6 +103,16 @@ func (m *Metrics) EventsProcessedCounter(result string) prometheus.Counter {
 // AlertsFiredCounter exposes one (rule, severity) child for test assertions.
 func (m *Metrics) AlertsFiredCounter(rule, severity string) prometheus.Counter {
 	return m.alertsFired.WithLabelValues(rule, severity)
+}
+
+// ProcessRetriesCounter exposes the retry counter for test assertions.
+func (m *Metrics) ProcessRetriesCounter() prometheus.Counter {
+	return m.processRetries
+}
+
+// LastCommitTimestampGauge exposes the last-commit gauge for test assertions.
+func (m *Metrics) LastCommitTimestampGauge() prometheus.Gauge {
+	return m.lastCommit
 }
 
 // Handler serves the registry in Prometheus exposition format.

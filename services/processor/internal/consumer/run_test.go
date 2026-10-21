@@ -27,15 +27,18 @@ import (
 // FetchMessage returns the next message (a fetched message is never handed out
 // again in the same session), an idle partition blocks until ctx ends, and a
 // closed reader returns io.EOF. fetchErrs are returned first, in order, the way
-// kafka-go surfaces broker and group errors without closing the reader.
+// kafka-go surfaces broker and group errors without closing the reader. A
+// non-nil commitErr fails every commit.
 type fakeReader struct {
-	mu        sync.Mutex
-	fetchErrs []error
-	msgs      []kafkago.Message
-	next      int
-	closed    bool
-	fetches   int
-	commits   []int64
+	mu          sync.Mutex
+	fetchErrs   []error
+	msgs        []kafkago.Message
+	next        int
+	closed      bool
+	fetches     int
+	commitErr   error
+	commitCalls int
+	commits     []int64
 }
 
 func (r *fakeReader) FetchMessage(ctx context.Context) (kafkago.Message, error) {
@@ -67,6 +70,10 @@ func (r *fakeReader) FetchMessage(ctx context.Context) (kafkago.Message, error) 
 func (r *fakeReader) CommitMessages(_ context.Context, msgs ...kafkago.Message) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	r.commitCalls++
+	if r.commitErr != nil {
+		return r.commitErr
+	}
 	for _, m := range msgs {
 		r.commits = append(r.commits, m.Offset)
 	}
@@ -83,6 +90,12 @@ func (r *fakeReader) fetchCount() int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	return r.fetches
+}
+
+func (r *fakeReader) commitCallCount() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.commitCalls
 }
 
 // fakeStore identifies events by temperature. failNext queues errors to return
@@ -239,6 +252,56 @@ func TestRun_SkipsMessageThatFailsPermanently(t *testing.T) {
 	assert.Equal(t, []int64{0, 1}, r.committed(), "the bad message is committed past, not left blocking the partition")
 	assert.Equal(t, 1.0, testutil.ToFloat64(m.EventsProcessedCounter(consumer.ResultError)))
 	assert.Equal(t, 1.0, testutil.ToFloat64(m.EventsProcessedCounter(consumer.ResultSuccess)))
+	assert.Equal(t, 0.0, testutil.ToFloat64(m.ProcessRetriesCounter()), "a permanent error is not a retry")
+}
+
+// While Run retries one message, kafka-go's lag stats freeze, so the retry
+// counter and the last-commit time are the stall signals.
+func TestRun_CountsEachRetriedAttempt(t *testing.T) {
+	defer consumer.SetRetryBackoff(time.Millisecond, 2*time.Millisecond)()
+	st := newFakeStore()
+	st.failNext[20] = []error{
+		errors.New("connect: connection refused"),
+		errors.New("connect: connection refused"),
+		errors.New("connect: connection refused"),
+	}
+	r := &fakeReader{msgs: []kafkago.Message{message(0, 20), message(1, 21)}}
+	m := metrics.New()
+
+	stop, _ := startRun(t, r, newConsumer(st).WithMetrics(m))
+	require.Eventually(t, lastCommitIs(r, 1), 5*time.Second, time.Millisecond)
+	stop()
+
+	assert.Equal(t, 3.0, testutil.ToFloat64(m.ProcessRetriesCounter()))
+}
+
+func TestRun_RecordsLastCommitTime(t *testing.T) {
+	r := &fakeReader{msgs: []kafkago.Message{message(0, 20)}}
+	m := metrics.New()
+	before := time.Now()
+
+	stop, _ := startRun(t, r, newConsumer(newFakeStore()).WithMetrics(m))
+	require.Eventually(t, lastCommitIs(r, 0), 5*time.Second, time.Millisecond)
+	stop() // Run has returned, so the commit's gauge update is visible.
+	after := time.Now()
+
+	got := testutil.ToFloat64(m.LastCommitTimestampGauge())
+	assert.GreaterOrEqual(t, got, float64(before.UnixNano())/1e9)
+	assert.LessOrEqual(t, got, float64(after.UnixNano())/1e9)
+}
+
+func TestRun_DoesNotRecordCommitTimeWhenCommitFails(t *testing.T) {
+	r := &fakeReader{
+		msgs:      []kafkago.Message{message(0, 20)},
+		commitErr: errors.New("kafka: coordinator not available"),
+	}
+	m := metrics.New()
+
+	stop, _ := startRun(t, r, newConsumer(newFakeStore()).WithMetrics(m))
+	require.Eventually(t, func() bool { return r.commitCallCount() >= 1 }, 5*time.Second, time.Millisecond)
+	stop()
+
+	assert.Equal(t, 0.0, testutil.ToFloat64(m.LastCommitTimestampGauge()), "a failed commit must not look like progress")
 }
 
 func TestIsPermanent(t *testing.T) {
