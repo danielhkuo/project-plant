@@ -32,12 +32,7 @@ export default function DeviceDetailPage({
     () => api.getDevice(id)
   );
 
-  const historyParams = {
-    from: new Date(Date.now() - rangeHours * 60 * 60 * 1000).toISOString(),
-    to: new Date().toISOString(),
-    limit: 500,
-  };
-  const { history } = useDeviceHistory(id, historyParams);
+  const { history } = useDeviceHistory(id, rangeHours);
   const { alerts, mutate: mutateAlerts } = useAlerts({ device_id: id });
 
   const onResolve = async (alertId: string) => {
