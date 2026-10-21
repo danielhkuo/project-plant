@@ -92,3 +92,15 @@ func (c *Consumer) eventProcessed(result string) {
 		c.metrics.EventProcessed(result)
 	}
 }
+
+func (c *Consumer) processRetried() {
+	if c.metrics != nil {
+		c.metrics.ProcessRetried()
+	}
+}
+
+func (c *Consumer) offsetCommitted() {
+	if c.metrics != nil {
+		c.metrics.OffsetCommitted()
+	}
+}

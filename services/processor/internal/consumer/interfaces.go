@@ -27,4 +27,9 @@ type Metrics interface {
 	EventProcessed(result string)
 	// AlertFired records one triggered alert by rule name and severity.
 	AlertFired(rule, severity string)
+	// ProcessRetried records one failed attempt that Run will retry on the
+	// same message.
+	ProcessRetried()
+	// OffsetCommitted records a successful offset commit.
+	OffsetCommitted()
 }

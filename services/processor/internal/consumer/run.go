@@ -71,7 +71,9 @@ func Run(ctx context.Context, reader MessageReader, c *Consumer, logger *zap.Log
 				return
 			}
 			logger.Error("commit failed", zap.Error(err))
+			continue
 		}
+		c.offsetCommitted()
 	}
 }
 
@@ -111,6 +113,7 @@ func processWithRetry(ctx context.Context, c *Consumer, msg kafkago.Message, log
 		logger.Warn("process failed, retrying the same message",
 			zap.Error(err), zap.Int("partition", msg.Partition), zap.Int64("offset", msg.Offset),
 			zap.Int("attempt", attempt), zap.Duration("backoff", backoff))
+		c.processRetried()
 		if !sleep(ctx, backoff) {
 			return false
 		}

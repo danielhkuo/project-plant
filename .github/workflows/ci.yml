@@ -183,6 +183,9 @@ jobs:
         run: |
           curl -fsS localhost:8080/metrics | grep events_ingested_total
           curl -fsS localhost:9091/metrics | grep events_processed_total
+          curl -fsS localhost:9091/metrics | grep processor_process_retries_total
+          # Non-zero: the integration tests above made the processor commit.
+          curl -fsS localhost:9091/metrics | grep -E '^processor_last_commit_timestamp_seconds [1-9]'
       - name: Teardown
         if: always()
         run: docker compose down -v
