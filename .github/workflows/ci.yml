@@ -124,6 +124,9 @@ jobs:
         run: |
           (cd services/ingestion && go test -tags=integration -race ./integration_test/...)
           (cd services/processor && go test -tags=integration ./integration_test/...)
+          # Store tests live next to the code but need Postgres/Redis containers,
+          # so they carry the integration tag and go-unit skips them.
+          (cd services/processor && go test -tags=integration -race ./internal/store/...)
 
   e2e:
     needs: [go-unit, python-unit, contract]
