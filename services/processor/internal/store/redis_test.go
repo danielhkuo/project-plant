@@ -107,9 +107,9 @@ func TestRedis_GetAllDevices(t *testing.T) {
 	assert.Len(t, results, 10)
 }
 
-// A device that stops reporting must fall out of devices:active. As a plain
-// set it never did, so GetAllLatest paid a wasted GET for every device the
-// system had ever seen.
+// A device that stops reporting must fall out of the registry. The old
+// devices:active set never forgot one, so GetAllLatest paid a wasted GET for
+// every device the system had ever seen.
 func TestRedis_ActiveDevicesTrimmedAfterTTL(t *testing.T) {
 	_, client, cleanup := setupRedis(t)
 	defer cleanup()
@@ -120,13 +120,13 @@ func TestRedis_ActiveDevicesTrimmedAfterTTL(t *testing.T) {
 	s := store.NewRedisStore(client, 2*time.Second)
 
 	require.NoError(t, s.SetLatest(ctx, "dev-stale", testEvent("dev-stale", time.Now().UTC())))
-	require.Equal(t, int64(1), client.ZCard(ctx, "devices:active").Val())
+	require.Equal(t, int64(1), client.ZCard(ctx, "devices:recent").Val())
 
 	// Past the window, a later write from any device trims the stale entry.
 	time.Sleep(3 * time.Second)
 	require.NoError(t, s.SetLatest(ctx, "dev-fresh", testEvent("dev-fresh", time.Now().UTC())))
 
-	members, err := client.ZRange(ctx, "devices:active", 0, -1).Result()
+	members, err := client.ZRange(ctx, "devices:recent", 0, -1).Result()
 	require.NoError(t, err)
 	assert.Equal(t, []string{"dev-fresh"}, members, "stale device should be trimmed from the registry")
 
@@ -134,6 +134,25 @@ func TestRedis_ActiveDevicesTrimmedAfterTTL(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, results, 1)
 	assert.Contains(t, results, "dev-fresh")
+}
+
+// A Redis upgraded in place still holds the old registry: devices:active as a
+// plain set. The new code must not trip over it (a sorted-set command on that
+// key would fail with WRONGTYPE on every write and read).
+func TestRedis_LegacyActiveSetDoesNotBreakRegistry(t *testing.T) {
+	s, client, cleanup := setupRedis(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	require.NoError(t, client.SAdd(ctx, "devices:active", "dev-old").Err())
+
+	require.NoError(t, s.SetLatest(ctx, "dev-new", testEvent("dev-new", time.Now().UTC())))
+
+	results, err := s.GetAllLatest(ctx)
+	require.NoError(t, err)
+	assert.Len(t, results, 1)
+	assert.Contains(t, results, "dev-new")
+	assert.Equal(t, "set", client.Type(ctx, "devices:active").Val(), "legacy key is left untouched")
 }
 
 func TestRedis_PubSubAlert(t *testing.T) {

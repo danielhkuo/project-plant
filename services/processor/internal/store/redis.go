@@ -15,8 +15,11 @@ import (
 const defaultTTL = 5 * time.Minute
 
 // activeDevicesKey holds the device IDs seen inside the TTL window, as a
-// sorted set scored by the time of the last write.
-const activeDevicesKey = "devices:active"
+// sorted set scored by the time of the last write. It deliberately does not
+// reuse the old "devices:active" name: that key was a plain set, and a Redis
+// that still holds it would answer every sorted-set command with WRONGTYPE.
+// The dashboard reads the same key (services/dashboard/internal/store/redis.go).
+const activeDevicesKey = "devices:recent"
 
 // RedisStore implements hot-cache storage for latest device readings.
 type RedisStore struct {
@@ -40,7 +43,7 @@ func (s *RedisStore) SetLatest(ctx context.Context, deviceID string, event telem
 	}
 
 	key := fmt.Sprintf("device:%s:latest", deviceID)
-	// devices:active is a sorted set scored by write time, not a plain set: a
+	// devices:recent is a sorted set scored by write time, not a plain set: a
 	// set never forgets a device that stopped reporting, so GetAllLatest would
 	// pay a wasted GET for every device ever seen. Scoring by time lets each
 	// write drop everything older than the value keys' own TTL.
