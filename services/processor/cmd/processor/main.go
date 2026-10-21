@@ -130,7 +130,7 @@ func main() {
 		zap.String("group", cfg.KafkaGroupID),
 	)
 
-	runLoop(ctx, reader, c, logger)
+	consumer.Run(ctx, reader, c, logger)
 
 	// Read loop has exited (signal); drain the admin server synchronously so
 	// in-flight scrapes/probes finish before the process exits.
@@ -138,36 +138,6 @@ func main() {
 	defer cancel()
 	adminSrv.Shutdown(shutdownCtx)
 	logger.Info("processor stopped")
-}
-
-// runLoop fetches, processes, and commits messages until ctx is cancelled.
-func runLoop(ctx context.Context, reader *kafkago.Reader, c *consumer.Consumer, logger *zap.Logger) {
-	for {
-		msg, err := reader.FetchMessage(ctx)
-		if err != nil {
-			if errors.Is(err, context.Canceled) {
-				logger.Info("shutting down processor")
-				return
-			}
-			logger.Error("fetch message failed", zap.Error(err))
-			continue
-		}
-
-		if err := c.Process(ctx, msg.Value); err != nil {
-			// Retryable failure persisted past the consumer's retries. Do not
-			// commit; the message will be re-fetched so Kafka buffers until
-			// the downstream store recovers (zero data loss).
-			logger.Error("process failed, not committing offset", zap.Error(err))
-			continue
-		}
-
-		if err := reader.CommitMessages(ctx, msg); err != nil {
-			if errors.Is(err, context.Canceled) {
-				return
-			}
-			logger.Error("commit failed", zap.Error(err))
-		}
-	}
 }
 
 // kafkaCheck reports broker reachability by dialing the first broker, bounded
