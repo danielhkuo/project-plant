@@ -33,7 +33,7 @@ type Alert struct {
 	RuleName    string                   `json:"rule_name"`
 	Severity    string                   `json:"severity"`
 	TriggeredAt time.Time                `json:"triggered_at"`
-	ResolvedAt  *time.Time               `json:"resolved_at,omitempty"`
+	ResolvedAt  *time.Time               `json:"resolved_at"` // null while active; the frontend type is string | null
 	Reading     telemetry.TelemetryEvent `json:"reading"`
 }
 

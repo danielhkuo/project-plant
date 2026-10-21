@@ -36,7 +36,8 @@ export function AlertFeed({ alerts, onResolve }: AlertFeedProps) {
   return (
     <div>
       {sorted.map((alert) => {
-        const isResolved = alert.resolved_at !== null;
+        // Loose != so a missing field (undefined) counts as active too.
+        const isResolved = alert.resolved_at != null;
         return (
           <div
             key={alert.alert_id}
