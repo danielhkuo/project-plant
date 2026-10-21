@@ -1,10 +1,11 @@
 // Command processor consumes telemetry events from Kafka, evaluates alert
 // rules, and persists events/alerts to Postgres + Redis.
 //
-// It wires together the consumer, rule engine, and stores, then runs a Kafka
-// read loop that processes each message and commits its offset only after a
-// successful (non-retryable) Process call — giving at-least-once delivery with
-// Kafka buffering during downstream outages.
+// It wires together the consumer, rule engine, and stores, then runs the Kafka
+// read loop (consumer.Run). A message that fails is retried in place until it
+// succeeds, and its offset is committed only after that, giving at-least-once
+// delivery with Kafka buffering during downstream outages. Only messages that
+// can never be stored (malformed JSON, data Postgres rejects) are skipped.
 //
 // Because the main loop is a Kafka consumer rather than an HTTP server, an
 // admin HTTP server on METRICS_ADDR (default :9091) serves /metrics and a
@@ -66,8 +67,9 @@ func main() {
 	c := consumer.NewConsumer(ruleEngine, eventStore, alertPub, logger).WithMetrics(m)
 
 	// Kafka consumer group reader. FetchMessage + manual CommitMessages gives
-	// us at-least-once semantics: an offset is only committed after Process
-	// returns nil, so a crash mid-process re-delivers the message.
+	// us at-least-once semantics: consumer.Run commits an offset only after
+	// the message is processed (or is permanently unprocessable), so a crash
+	// or shutdown mid-process redelivers the message.
 	reader := kafkago.NewReader(kafkago.ReaderConfig{
 		Brokers:     cfg.KafkaBrokers,
 		Topic:       cfg.KafkaTopic,
@@ -110,7 +112,8 @@ func main() {
 
 	// Export consumer lag while running. Stats().Lag is the only lag source
 	// for group readers (Reader.Lag returns -1 with a GroupID); it refreshes
-	// as messages are read, so the gauge can be stale while the topic is idle.
+	// as messages are read, so the gauge can be stale while the topic is idle
+	// or while consumer.Run is retrying one message (watch its logs then).
 	go func() {
 		ticker := time.NewTicker(15 * time.Second)
 		defer ticker.Stop()
@@ -130,7 +133,7 @@ func main() {
 		zap.String("group", cfg.KafkaGroupID),
 	)
 
-	runLoop(ctx, reader, c, logger)
+	consumer.Run(ctx, reader, c, logger)
 
 	// Read loop has exited (signal); drain the admin server synchronously so
 	// in-flight scrapes/probes finish before the process exits.
@@ -138,36 +141,6 @@ func main() {
 	defer cancel()
 	adminSrv.Shutdown(shutdownCtx)
 	logger.Info("processor stopped")
-}
-
-// runLoop fetches, processes, and commits messages until ctx is cancelled.
-func runLoop(ctx context.Context, reader *kafkago.Reader, c *consumer.Consumer, logger *zap.Logger) {
-	for {
-		msg, err := reader.FetchMessage(ctx)
-		if err != nil {
-			if errors.Is(err, context.Canceled) {
-				logger.Info("shutting down processor")
-				return
-			}
-			logger.Error("fetch message failed", zap.Error(err))
-			continue
-		}
-
-		if err := c.Process(ctx, msg.Value); err != nil {
-			// Retryable failure persisted past the consumer's retries. Do not
-			// commit; the message will be re-fetched so Kafka buffers until
-			// the downstream store recovers (zero data loss).
-			logger.Error("process failed, not committing offset", zap.Error(err))
-			continue
-		}
-
-		if err := reader.CommitMessages(ctx, msg); err != nil {
-			if errors.Is(err, context.Canceled) {
-				return
-			}
-			logger.Error("commit failed", zap.Error(err))
-		}
-	}
 }
 
 // kafkaCheck reports broker reachability by dialing the first broker, bounded

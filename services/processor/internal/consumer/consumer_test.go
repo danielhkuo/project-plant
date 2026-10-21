@@ -136,23 +136,20 @@ func TestConsumer_CommitsOffset(t *testing.T) {
 	assert.NoError(t, err, "nil return signals offset should be committed")
 }
 
-func TestConsumer_StoreError_Retries(t *testing.T) {
+// Process makes one attempt and reports the failure; Run owns retrying, so
+// there is one backoff policy instead of two stacked ones.
+func TestConsumer_StoreError_ReturnedWithoutRetrying(t *testing.T) {
 	store := new(mockStore)
 	pub := new(mockAlertPub)
 	eng := engine.NewDefaultRuleEngine()
 
-	// Fail twice, succeed on third
-	store.On("Write", mock.Anything, mock.Anything).
-		Return(errors.New("db connection lost")).Times(2)
-	store.On("Write", mock.Anything, mock.Anything).
-		Return(nil).Once()
-	store.On("SetLatest", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	dbErr := errors.New("db connection lost")
+	store.On("Write", mock.Anything, mock.Anything).Return(dbErr).Once()
 
 	c := consumer.NewConsumer(eng, store, pub, zap.NewNop())
 	err := c.Process(context.Background(), validMessage())
 
-	require.NoError(t, err)
-	// 3 Write calls (2 failed + 1 success) + 1 SetLatest = 4 total
-	store.AssertNumberOfCalls(t, "Write", 3)
-	store.AssertCalled(t, "SetLatest", mock.Anything, mock.Anything, mock.Anything)
+	require.ErrorIs(t, err, dbErr)
+	store.AssertNumberOfCalls(t, "Write", 1)
+	store.AssertNotCalled(t, "SetLatest", mock.Anything, mock.Anything, mock.Anything)
 }
