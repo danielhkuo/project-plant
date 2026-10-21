@@ -37,8 +37,9 @@ func (r *RedisDeviceReader) GetLatest(ctx context.Context, deviceID string) (tel
 
 // GetAllLatest retrieves the latest reading for all active devices.
 func (r *RedisDeviceReader) GetAllLatest(ctx context.Context) (map[string]telemetry.TelemetryEvent, error) {
-	// devices:active is a sorted set scored by write time (see the processor).
-	deviceIDs, err := r.client.ZRange(ctx, "devices:active", 0, -1).Result()
+	// devices:recent is a sorted set scored by write time, written by the
+	// processor (activeDevicesKey in services/processor/internal/store/redis.go).
+	deviceIDs, err := r.client.ZRange(ctx, "devices:recent", 0, -1).Result()
 	if err != nil {
 		return nil, err
 	}
