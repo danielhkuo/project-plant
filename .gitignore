@@ -53,3 +53,6 @@ frontend/.next/
 frontend/out/
 frontend/next-env.d.ts
 frontend/tsconfig.tsbuildinfo
+
+# Local-only docs (kept out of the repo)
+docs/*.md
