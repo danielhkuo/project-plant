@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { AlertFeed } from "@/components/AlertFeed";
+import type { Alert } from "@/lib/types";
 import { mockAlerts } from "./mocks/fixtures";
 
 describe("AlertFeed", () => {
@@ -28,5 +29,19 @@ describe("AlertFeed", () => {
     expect(resolveButtons).toHaveLength(2); // alert-001 and alert-002 are active
     await user.click(resolveButtons[0]);
     expect(onResolve).toHaveBeenCalledWith("alert-001");
+  });
+
+  it("treats an alert without resolved_at as active", () => {
+    // Payload shape from a dashboard API that omits the field for active
+    // alerts instead of sending null.
+    const fromApi = JSON.parse(
+      JSON.stringify({ ...mockAlerts[0], resolved_at: undefined })
+    ) as Alert;
+    expect("resolved_at" in fromApi).toBe(false);
+
+    render(<AlertFeed alerts={[fromApi]} onResolve={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: /resolve/i })).toBeInTheDocument();
+    expect(screen.queryByText("[RESOLVED]")).not.toBeInTheDocument();
   });
 });

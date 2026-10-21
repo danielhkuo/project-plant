@@ -214,6 +214,29 @@ func TestListAlerts(t *testing.T) {
 	alerts.AssertExpectations(t)
 }
 
+// The frontend's Alert type is `resolved_at: string | null`. An active alert
+// must send an explicit null: leaving the field out made the dashboard read
+// it as undefined, and `undefined !== null` rendered every active alert as
+// resolved with no RESOLVE button.
+func TestListAlerts_ActiveAlertSendsNullResolvedAt(t *testing.T) {
+	alerts := new(mockAlertStore)
+	alerts.On("QueryAlerts", mock.Anything, api.AlertFilters{}).Return([]api.Alert{
+		{AlertID: "a-1", DeviceID: "dev-001", RuleName: "high_temperature", Severity: "warning", TriggeredAt: time.Now().UTC()},
+	}, nil)
+
+	router := newRouter(new(mockDeviceReader), new(mockHistoryReader), alerts, new(mockStatsReader))
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/alerts", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	var raw []map[string]any
+	require.NoError(t, json.NewDecoder(rec.Body).Decode(&raw))
+	require.Len(t, raw, 1)
+	resolvedAt, present := raw[0]["resolved_at"]
+	assert.True(t, present, "resolved_at must be present for an active alert")
+	assert.Nil(t, resolvedAt)
+}
+
 func TestListAlerts_FilterBySeverity(t *testing.T) {
 	alerts := new(mockAlertStore)
 	alerts.On("QueryAlerts", mock.Anything, api.AlertFilters{Severity: "critical"}).
